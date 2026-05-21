@@ -20,10 +20,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import com.rafaelbonasio.tabletennisapp.core.GameRules
+import com.rafaelbonasio.tabletennisapp.core.Player
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RootScreen(gameViewModel: GameViewModel, historyViewModel: HistoryViewModel, onNavigateSettings: () -> Unit, onStartGame: () -> Unit) {
+fun RootScreen(onNavigateSettings: () -> Unit, onStartGame: (Player, Player, GameRules) -> Unit) {
     var selectedTab by rememberSaveable { mutableStateOf(Tabs.SCOREBOARD) }
 
     NavigationSuiteScaffold(
@@ -58,7 +60,7 @@ fun RootScreen(gameViewModel: GameViewModel, historyViewModel: HistoryViewModel,
             }
         ) { paddingValues ->
             when (selectedTab) {
-                Tabs.SCOREBOARD -> { HistoryTab(gameViewModel, historyViewModel, onStartGame, paddingValues) }
+                Tabs.SCOREBOARD -> { HistoryTab(onStartGame, paddingValues) }
                 Tabs.TAB_2, Tabs.TAB_3 -> { PlaceholderTab() }
             }
         }

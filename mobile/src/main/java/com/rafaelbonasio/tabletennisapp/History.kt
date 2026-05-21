@@ -3,12 +3,9 @@ package com.rafaelbonasio.tabletennisapp
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
@@ -23,9 +20,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rafaelbonasio.tabletennisapp.core.Game
 import com.rafaelbonasio.tabletennisapp.core.GameRules
 import com.rafaelbonasio.tabletennisapp.core.Player
@@ -37,10 +33,10 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
-fun HistoryTab(gameViewModel: GameViewModel, historyViewModel: HistoryViewModel, onStartGame: () -> Unit, paddingValues: PaddingValues) {
+fun HistoryTab(onStartGame: (player1: Player, player2: Player, rules: GameRules) -> Unit, paddingValues: PaddingValues, viewModel: HistoryViewModel = viewModel()) {
     var showDialog by remember { mutableStateOf(false) }
 
-    val games by historyViewModel.games.collectAsState()
+    val games by viewModel.games.collectAsState()
 
     Scaffold(
         floatingActionButton = {
@@ -72,9 +68,7 @@ fun HistoryTab(gameViewModel: GameViewModel, historyViewModel: HistoryViewModel,
 
                 val rules = GameRules(pointCount, setCount, 2)
 
-                gameViewModel.newGame(player1, player2, rules)
-
-                onStartGame()
+                onStartGame(player1, player2, rules)
             })
         }
     }

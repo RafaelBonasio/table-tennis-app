@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -26,8 +27,8 @@ fun App() {
 
     var theme by rememberSaveable { mutableStateOf(Theme.System) }
 
-    val gameViewModel = GameViewModel()
-    val historyViewModel = HistoryViewModel()
+    val historyViewModel: HistoryViewModel = viewModel()
+    val gameViewModel: GameViewModel = viewModel()
 
     TableTennisAppTheme(darkTheme = !theme.isLight(), true) {
         NavDisplay(
@@ -36,7 +37,7 @@ fun App() {
             entryProvider = { key ->
                 when (key) {
                     is Screen.Root -> NavEntry(key) {
-                        RootScreen(gameViewModel, historyViewModel, { backStack.add(Screen.Settings) }, { backStack.add(Screen.Game) })
+                        RootScreen({ backStack.add(Screen.Settings) }, { player1, player2, rules -> backStack.add(Screen.Game); gameViewModel.newGame(player1, player2, rules) })
                     }
 
                     is Screen.Settings -> NavEntry(key) {
@@ -44,7 +45,7 @@ fun App() {
                     }
 
                     is Screen.Game -> NavEntry(key) {
-                        GamePage(gameViewModel, historyViewModel, { backStack.removeLastOrNull() })
+                        GamePage({ backStack.removeLastOrNull() }, historyViewModel::addGame)
                     }
 
                     else -> error("Unknown route: $key")

@@ -120,7 +120,7 @@ fun ThemePreviewCard(theme: Theme, isSelected: Boolean, onClick: () -> Unit) {
                         }
             ) {
                 TableTennisAppTheme(!theme.isLight()) {
-                    RootScreen(GameViewModel(), HistoryViewModel(), {}, {})
+                    RootScreen({}, { _, _, _ -> })
                 }
             }
 

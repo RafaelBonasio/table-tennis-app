@@ -27,7 +27,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +34,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rafaelbonasio.tabletennisapp.core.Game
 import com.rafaelbonasio.tabletennisapp.core.GameEvent
 import com.rafaelbonasio.tabletennisapp.core.GameRules
@@ -48,8 +48,8 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
-fun GamePage(gameViewModel: GameViewModel, historyViewModel: HistoryViewModel, onNavigateBack: () -> Unit) {
-    val state by gameViewModel.uiState.collectAsStateWithLifecycle()
+fun GamePage(onNavigateBack: () -> Unit, onAddGame: (Game) -> Unit, viewModel: GameViewModel = viewModel()) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -65,15 +65,15 @@ fun GamePage(gameViewModel: GameViewModel, historyViewModel: HistoryViewModel, o
         bottomBar = {
             BottomAppBar(
                 actions = {
-                    IconButton({ gameViewModel.addEvent(GameEvent.Undo) }) {
+                    IconButton({ viewModel.addEvent(GameEvent.Undo) }) {
                         Icon(Icons.Default.KeyboardArrowLeft, "Desfazer")
                     }
-                    IconButton({ gameViewModel.addEvent(GameEvent.Redo) }) {
+                    IconButton({ viewModel.addEvent(GameEvent.Redo) }) {
                         Icon(Icons.Default.Refresh, "Refazer")
                     }
                 },
                 floatingActionButton = {
-                    FloatingActionButton({ historyViewModel.addGame(gameViewModel.game) }) {
+                    FloatingActionButton({ onAddGame(viewModel.game) }) {
                         Icon(Icons.Default.ExitToApp, "Finalizar")
                     }
                 }
@@ -82,18 +82,18 @@ fun GamePage(gameViewModel: GameViewModel, historyViewModel: HistoryViewModel, o
     ) {
         Row(Modifier.padding(it)) {
             PlayerScoreCard(
-                gameViewModel.game.player1.name,
+                viewModel.game.player1.name,
                 state.player1Score,
                 state.player1SetScore,
                 !state.isPlayer2Serving,
-                { gameViewModel.addEvent(GameEvent.Player1Scored) })
+                { viewModel.addEvent(GameEvent.Player1Scored) })
 
             PlayerScoreCard(
-                gameViewModel.game.player2.name,
+                viewModel.game.player2.name,
                 state.player2Score,
                 state.player2SetScore,
                 state.isPlayer2Serving,
-                { gameViewModel.addEvent(GameEvent.Player2Scored) }
+                { viewModel.addEvent(GameEvent.Player2Scored) }
             )
         }
     }
