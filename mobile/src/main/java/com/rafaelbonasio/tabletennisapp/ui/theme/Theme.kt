@@ -1,7 +1,10 @@
 package com.rafaelbonasio.tabletennisapp.ui.theme
 
-import android.app.Activity
+import android.graphics.Color
 import android.os.Build
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -9,7 +12,13 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Dp
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.LocalHazeStyle
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -35,24 +44,59 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun TableTennisAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    theme: Theme,
+    dynamicColor: Boolean,
+    blurRadius: Dp,
     content: @Composable () -> Unit
 ) {
+    val isThemeLight = theme.isLight()
+
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (!isThemeLight) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColorScheme
+        !isThemeLight -> DarkColorScheme
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    // Update system bars:
+    val view = LocalView.current
+    LaunchedEffect(isThemeLight) {
+        val activity = view.context as ComponentActivity
+
+        val style = if (isThemeLight) {
+            SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+        } else {
+            SystemBarStyle.dark(Color.TRANSPARENT)
+        }
+
+        activity.enableEdgeToEdge(style, style)
+    }
+
+    CompositionLocalProvider(
+        LocalHazeStyle provides HazeStyle(tint = null, blurRadius = blurRadius, noiseFactor = 0f)
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
+}
+
+enum class Theme {
+    DARK,
+    LIGHT,
+    SYSTEM;
+
+    @Composable
+    fun isLight(): Boolean {
+        return when (this) {
+            DARK -> false
+            LIGHT -> true
+            SYSTEM -> !isSystemInDarkTheme()
+        }
+    }
 }

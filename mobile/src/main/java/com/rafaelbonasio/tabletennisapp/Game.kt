@@ -1,8 +1,10 @@
 package com.rafaelbonasio.tabletennisapp
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -15,87 +17,116 @@ import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.NavKey
 import com.rafaelbonasio.tabletennisapp.core.Game
 import com.rafaelbonasio.tabletennisapp.core.GameEvent
 import com.rafaelbonasio.tabletennisapp.core.GameRules
 import com.rafaelbonasio.tabletennisapp.core.Player
 import com.rafaelbonasio.tabletennisapp.core.Scoreboard
+import com.rafaelbonasio.tabletennisapp.ui.FancyScaffold
+import com.rafaelbonasio.tabletennisapp.ui.FancyTopAppBar
+import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
+import com.rafaelbonasio.tabletennisapp.ui.rememberDisplayRoundedCornerShape
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.Serializable
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
+@Serializable
+data object Game : NavKey
+
+data object GameSharedTransitionKey
+
 @Composable
-fun GamePage(onNavigateBack: () -> Unit, onAddGame: (Game) -> Unit, viewModel: GameViewModel = viewModel()) {
+fun GamePage(sharedTransitionScope: SharedTransitionScope, animatedVisibilityScope: AnimatedVisibilityScope, onNavigateBack: () -> Unit, onAddGame: (Game) -> Unit, viewModel: GameViewModel = viewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    BackButton(onNavigateBack)
-                },
-                title = {
-                    Text("Jogo")
-                }
-            )
-        },
-        bottomBar = {
-            BottomAppBar(
-                actions = {
-                    IconButton({ viewModel.addEvent(GameEvent.Undo) }) {
-                        Icon(Icons.Default.KeyboardArrowLeft, "Desfazer")
-                    }
-                    IconButton({ viewModel.addEvent(GameEvent.Redo) }) {
-                        Icon(Icons.Default.Refresh, "Refazer")
-                    }
-                },
-                floatingActionButton = {
-                    FloatingActionButton({ onAddGame(viewModel.game) }) {
-                        Icon(Icons.Default.ExitToApp, "Finalizar")
-                    }
-                }
-            )
-        }
-    ) {
-        Row(Modifier.padding(it)) {
-            PlayerScoreCard(
-                viewModel.game.player1.name,
-                state.player1Score,
-                state.player1SetScore,
-                !state.isPlayer2Serving,
-                { viewModel.addEvent(GameEvent.Player1Scored) })
+    val hazeState = rememberHazeState()
 
-            PlayerScoreCard(
-                viewModel.game.player2.name,
-                state.player2Score,
-                state.player2SetScore,
-                state.isPlayer2Serving,
-                { viewModel.addEvent(GameEvent.Player2Scored) }
-            )
+    with (sharedTransitionScope) {
+        Box(modifier = Modifier.sharedBounds(
+            rememberSharedContentState(GameSharedTransitionKey),
+            animatedVisibilityScope,
+            boundsTransform = asymmetricBoundsTransform,
+            clipInOverlayDuringTransition = OverlayClip(rememberDisplayRoundedCornerShape())
+        )) {
+
+            FancyScaffold(
+                hazeState = hazeState,
+
+                topBar = {
+                    FancyTopAppBar(
+                        hazeState = hazeState,
+                        navigationIcon = {
+                            BackButton(onNavigateBack)
+                        },
+                        title = {
+                            Text("Jogo")
+                        }
+                    )
+                },
+                bottomBar = {
+                    BottomAppBar(
+                        actions = {
+                            IconButton({ viewModel.addEvent(GameEvent.Undo) }) {
+                                Icon(Icons.Default.KeyboardArrowLeft, "Desfazer")
+                            }
+                            IconButton({ viewModel.addEvent(GameEvent.Redo) }) {
+                                Icon(Icons.Default.Refresh, "Refazer")
+                            }
+                        },
+                        floatingActionButton = {
+                            FloatingActionButton(
+                                { onAddGame(viewModel.game) },
+                                shape = rememberDisplayRoundedCornerShape()
+                            ) {
+                                Icon(Icons.Default.ExitToApp, "Finalizar")
+                            }
+                        },
+                        containerColor = Color.Transparent
+                    )
+                }
+            ) {
+                Row(Modifier.padding(it).clip(rememberDisplayRoundedCornerShape())) {
+                    PlayerScoreCard(
+                        viewModel.game.player1.name,
+                        state.player1Score,
+                        state.player1SetScore,
+                        !state.isPlayer2Serving,
+                        { viewModel.addEvent(GameEvent.Player1Scored) })
+
+                    PlayerScoreCard(
+                        viewModel.game.player2.name,
+                        state.player2Score,
+                        state.player2SetScore,
+                        state.isPlayer2Serving,
+                        { viewModel.addEvent(GameEvent.Player2Scored) }
+                    )
+                }
+            }
         }
+
     }
 }
 
@@ -110,31 +141,28 @@ private fun RowScope.PlayerScoreCard(
     Surface(
         modifier = Modifier
             .weight(1f)
-            .fillMaxHeight()
-            .border(if (isServing) BorderStroke(2.dp, Color.Red) else BorderStroke(2.dp, Color.Gray)),
-        color = MaterialTheme.colorScheme.primaryContainer,
+            .fillMaxHeight(),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
         onClick = onClick
     ) {
         Column(
+            modifier = Modifier
+                .background(if (isServing) Color.Red.copy(0.1f) else Color.Transparent),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Text(name, style = MaterialTheme.typography.titleLarge)
 
-            Row {
-                Text(setsScore.toString(), style = MaterialTheme.typography.labelSmall)
-                Text(points.toString(), style = MaterialTheme.typography.displayLarge)
-            }
+            Text(points.toString(), style = MaterialTheme.typography.displayLarge, fontWeight = FontWeight.ExtraBold)
+            Text(setsScore.toString(), style = MaterialTheme.typography.displaySmall)
         }
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameSettingsDialog(onDismiss: () -> Unit, onConfirm: (pointCount: Int, setCount: Int) -> Unit) {
-    var pointsFieldState = rememberTextFieldState("11")
-    var setsFieldState = rememberTextFieldState("3")
+    val pointsFieldState = rememberTextFieldState("11")
+    val setsFieldState = rememberTextFieldState("3")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -164,9 +192,7 @@ fun GameSettingsDialog(onDismiss: () -> Unit, onConfirm: (pointCount: Int, setCo
     )
 }
 
-
-
-class GameViewModel() : ViewModel() {
+class GameViewModel : ViewModel() {
     @OptIn(ExperimentalUuidApi::class)
     public var game: Game = Game(Player(Uuid.random(), ""), Player(Uuid.random(), ""), GameRules(11, 3, 2))
 
