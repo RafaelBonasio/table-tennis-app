@@ -1,6 +1,5 @@
 package com.rafaelbonasio.tabletennisapp
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -34,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import com.rafaelbonasio.tabletennisapp.core.Game
 import com.rafaelbonasio.tabletennisapp.core.GameRules
 import com.rafaelbonasio.tabletennisapp.core.Player
@@ -51,10 +51,8 @@ import kotlinx.coroutines.flow.update
 import kotlin.uuid.Uuid
 
 @Composable
-fun HistoryTab(sharedTransitionScope: SharedTransitionScope, animatedVisibilityScope: AnimatedVisibilityScope, onStartGame: (player1: Player, player2: Player, rules: GameRules) -> Unit, paddingValues: PaddingValues, viewModel: HistoryViewModel = viewModel()) {
+fun HistoryTab(games: List<Game>, sharedTransitionScope: SharedTransitionScope, onStartGame: (player1: Player, player2: Player, rules: GameRules) -> Unit, paddingValues: PaddingValues) {
     var showDialog by remember { mutableStateOf(false) }
-
-    val games by viewModel.games.collectAsState()
 
     val lazyListState = rememberLazyListState()
 
@@ -76,7 +74,7 @@ fun HistoryTab(sharedTransitionScope: SharedTransitionScope, animatedVisibilityS
                     modifier = Modifier
                         .sharedBounds(
                             rememberSharedContentState(GameSharedTransitionKey),
-                            animatedVisibilityScope,
+                            LocalNavAnimatedContentScope.current,
                             boundsTransform = asymmetricBoundsTransform,
                             clipInOverlayDuringTransition = OverlayClip(rememberDisplayRoundedCornerShape())
                         )

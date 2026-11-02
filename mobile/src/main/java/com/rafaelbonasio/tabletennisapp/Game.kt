@@ -1,6 +1,5 @@
 package com.rafaelbonasio.tabletennisapp
 
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,8 +34,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import com.rafaelbonasio.tabletennisapp.core.Game
 import com.rafaelbonasio.tabletennisapp.core.GameEvent
 import com.rafaelbonasio.tabletennisapp.core.GameRules
@@ -54,20 +53,25 @@ import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
 
 @Serializable
-data object Game : NavKey
+data object GameNavKey : NavKey
 
 data object GameSharedTransitionKey
 
 @Composable
-fun GamePage(sharedTransitionScope: SharedTransitionScope, animatedVisibilityScope: AnimatedVisibilityScope, onNavigateBack: () -> Unit, onAddGame: (Game) -> Unit, viewModel: GameViewModel = viewModel()) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
+fun GameScreen(
+    state: Scoreboard,
+    game: Game,
+    sharedTransitionScope: SharedTransitionScope,
+    onNavigateBack: () -> Unit,
+    onAddGame: (Game) -> Unit,
+    onAddEvent: (GameEvent) -> Unit
+) {
     val hazeState = rememberHazeState()
 
     with (sharedTransitionScope) {
         Box(modifier = Modifier.sharedBounds(
             rememberSharedContentState(GameSharedTransitionKey),
-            animatedVisibilityScope,
+            LocalNavAnimatedContentScope.current,
             boundsTransform = asymmetricBoundsTransform,
             clipInOverlayDuringTransition = OverlayClip(rememberDisplayRoundedCornerShape())
         )) {
@@ -89,16 +93,16 @@ fun GamePage(sharedTransitionScope: SharedTransitionScope, animatedVisibilitySco
                 bottomBar = {
                     BottomAppBar(
                         actions = {
-                            IconButton({ viewModel.addEvent(GameEvent.Undo) }) {
+                            IconButton({ onAddEvent(GameEvent.Undo) }) {
                                 Icon(Icons.Default.KeyboardArrowLeft, stringResource(R.string.action_undo))
                             }
-                            IconButton({ viewModel.addEvent(GameEvent.Redo) }) {
+                            IconButton({ onAddEvent(GameEvent.Redo) }) {
                                 Icon(Icons.Default.Refresh, stringResource(R.string.action_redo))
                             }
                         },
                         floatingActionButton = {
                             FloatingActionButton(
-                                { onAddGame(viewModel.game) },
+                                { onAddGame(game) },
                                 shape = rememberDisplayRoundedCornerShape()
                             ) {
                                 Icon(Icons.Default.ExitToApp, stringResource(R.string.action_finish))
@@ -110,18 +114,18 @@ fun GamePage(sharedTransitionScope: SharedTransitionScope, animatedVisibilitySco
             ) {
                 Row(Modifier.padding(it).clip(rememberDisplayRoundedCornerShape())) {
                     PlayerScoreCard(
-                        viewModel.game.player1.name,
+                        game.player1.name,
                         state.player1Score,
                         state.player1SetScore,
                         !state.isPlayer2Serving,
-                        { viewModel.addEvent(GameEvent.Player1Scored) })
+                        { onAddEvent(GameEvent.Player1Scored) })
 
                     PlayerScoreCard(
-                        viewModel.game.player2.name,
+                        game.player2.name,
                         state.player2Score,
                         state.player2SetScore,
                         state.isPlayer2Serving,
-                        { viewModel.addEvent(GameEvent.Player2Scored) }
+                        { onAddEvent(GameEvent.Player2Scored) }
                     )
                 }
             }

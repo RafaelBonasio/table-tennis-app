@@ -1,8 +1,6 @@
 package com.rafaelbonasio.tabletennisapp
 
-import android.app.Application
 import android.content.Context
-import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.BorderStroke
@@ -47,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
@@ -70,30 +68,28 @@ import java.io.OutputStream
 import kotlin.math.roundToInt
 
 @Serializable
-data object SettingsRoute : NavKey
+data object SettingsNavKey : NavKey
 
 class SettingsViewModel(
-    application: Application
-) : AndroidViewModel(application) {
-    private val _dataStore = application.applicationContext.preferencesDataStore
-
-    val uiState = _dataStore.data.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(), initialValue = Preferences())
+    private val dataStore: DataStore<Preferences>
+) : ViewModel() {
+    val uiState = dataStore.data.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(), initialValue = Preferences())
 
     fun updateTheme(theme: Theme) {
         viewModelScope.launch {
-            _dataStore.updateData { uiState -> uiState.copy(theme = theme) }
+            dataStore.updateData { uiState -> uiState.copy(theme = theme) }
         }
     }
 
     fun updateDynamicColor(isDynamicColorEnabled: Boolean) {
         viewModelScope.launch {
-            _dataStore.updateData { uiState -> uiState.copy(isDynamicColorEnabled = isDynamicColorEnabled) }
+            dataStore.updateData { uiState -> uiState.copy(isDynamicColorEnabled = isDynamicColorEnabled) }
         }
     }
 
     fun updateBlurRadius(blurRadiusDp: Float) {
         viewModelScope.launch {
-            _dataStore.updateData { uiState -> uiState.copy(blurRadiusDp = blurRadiusDp) }
+            dataStore.updateData { uiState -> uiState.copy(blurRadiusDp = blurRadiusDp) }
         }
     }
 }
@@ -175,9 +171,14 @@ fun SettingsSectionItem(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalGridApi::class)
 @Composable
-fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTransitionScope, animatedVisibilityScope: AnimatedVisibilityScope, onNavigateBack: () -> Unit) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-
+fun SettingsScreen(
+    state: Preferences,
+    sharedTransitionScope: SharedTransitionScope,
+    onNavigateBack: () -> Unit,
+    onUpdateTheme: (Theme) -> Unit,
+    onUpdateDynamicColor: (Boolean) -> Unit,
+    onUpdateBlurRadius: (Float) -> Unit
+) {
     val hazeState = rememberHazeState()
 
     with (sharedTransitionScope) {
@@ -185,7 +186,7 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
             hazeState = hazeState,
             modifier = Modifier.sharedBounds(
                 rememberSharedContentState(SettingsSharedTransitionKey),
-                animatedVisibilityScope,
+                LocalNavAnimatedContentScope.current,
                 boundsTransform = asymmetricBoundsTransform,
                 clipInOverlayDuringTransition = OverlayClip(rememberDisplayRoundedCornerShape())
             ),
@@ -228,14 +229,14 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
                                             state.isDynamicColorEnabled,
                                             state.blurRadiusDp.dp,
                                             state.theme == theme,
-                                            { viewModel.updateTheme(theme) })
+                                            { onUpdateTheme(theme) })
                                     }
                                 }
                                 Row {
                                     Text(Theme.SYSTEM.name)
                                     RadioButton(
                                         state.theme == Theme.SYSTEM,
-                                        { viewModel.updateTheme(Theme.SYSTEM) })
+                                        { onUpdateTheme(Theme.SYSTEM) })
                                 }
                             }
                         }
@@ -245,7 +246,7 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
                                 Text(stringResource(R.string.settings_dynamic_color))
                                 Switch(
                                     state.isDynamicColorEnabled,
-                                    { viewModel.updateDynamicColor(!state.isDynamicColorEnabled) })
+                                    { onUpdateDynamicColor(!state.isDynamicColorEnabled) })
                             }
                         }
                     }
@@ -256,7 +257,7 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
                                 Text(stringResource(R.string.settings_blur_radius))
                                 Slider(
                                     value = state.blurRadiusDp,
-                                    onValueChange = { value -> viewModel.updateBlurRadius(value.roundToInt().toFloat()) },
+                                    onValueChange = { value -> onUpdateBlurRadius(value.roundToInt().toFloat()) },
                                     modifier = Modifier.weight(1f),
                                     valueRange = 0f..64f
                                 )
@@ -320,8 +321,12 @@ fun ThemePreviewCard(theme: Theme, dynamicColor: Boolean, blurRadius: Dp, isSele
             ) {
                 TableTennisAppTheme(theme, dynamicColor, blurRadius) {
                     SharedTransitionLayout {
-                        RootScreen(this@SharedTransitionLayout,
-                            LocalNavAnimatedContentScope.current, {}, { _, _, _ -> })
+                        RootScreen(
+                            emptyList(), // TODO: Figure out mock data for rich display.
+                            this@SharedTransitionLayout,
+                            {},
+                            { _, _, _ -> }
+                        )
                     }
                 }
             }

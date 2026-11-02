@@ -6,47 +6,71 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import com.rafaelbonasio.tabletennisapp.ui.noneTransitionSpec
 import com.rafaelbonasio.tabletennisapp.ui.theme.TableTennisAppTheme
+import org.koin.androidx.compose.koinViewModel
 
 @PreviewScreenSizes
 @Composable
 fun App() {
-    val backStack = rememberNavBackStack(Root)
+    val backStack = rememberNavBackStack(RootNavKey)
 
-    val settingsViewModel: SettingsViewModel = viewModel()
+    val settingsViewModel: SettingsViewModel = koinViewModel()
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
 
-    val historyViewModel: HistoryViewModel = viewModel()
+    val historyViewModel: HistoryViewModel = koinViewModel()
 
-    val gameViewModel: GameViewModel = viewModel()
+    val gameViewModel: GameViewModel = koinViewModel()
 
     SharedTransitionLayout {
         TableTennisAppTheme(settingsState.theme, settingsState.isDynamicColorEnabled, settingsState.blurRadiusDp.dp) {
             NavDisplay(
                 backStack = backStack,
                 entryProvider = entryProvider {
-                    entry<Root> {
-                        RootScreen(this@SharedTransitionLayout,
-                            LocalNavAnimatedContentScope.current, { backStack.add(SettingsRoute) }, { player1, player2, rules -> backStack.add(Game); gameViewModel.newGame(player1, player2, rules) })
+                    entry<RootNavKey> {
+                        val games by historyViewModel.games.collectAsStateWithLifecycle()
+
+                        RootScreen(
+                            games,
+                            this@SharedTransitionLayout,
+                            { backStack.add(SettingsNavKey) },
+                            { player1, player2, rules -> backStack.add(GameNavKey); gameViewModel.newGame(player1, player2, rules) }
+                        )
                     }
 
-                    entry<SettingsRoute> {
-                        SettingsPage(settingsViewModel, this@SharedTransitionLayout, LocalNavAnimatedContentScope.current, { backStack.removeLastOrNull() })
+                    entry<SettingsNavKey> {
+                        val uiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+
+                        SettingsScreen(
+                            uiState,
+                            this@SharedTransitionLayout,
+                            { backStack.removeLastOrNull() },
+                            settingsViewModel::updateTheme,
+                            settingsViewModel::updateDynamicColor,
+                            settingsViewModel::updateBlurRadius
+                        )
                     }
 
-                    entry<Game> {
-                        GamePage(this@SharedTransitionLayout, LocalNavAnimatedContentScope.current, { backStack.removeLastOrNull() }, historyViewModel::addGame)
+                    entry<GameNavKey> {
+                        val uiState by gameViewModel.uiState.collectAsStateWithLifecycle()
+
+                        GameScreen(
+                            uiState,
+                            gameViewModel.game,
+                            this@SharedTransitionLayout,
+                            { backStack.removeLastOrNull() },
+                            historyViewModel::addGame,
+                            gameViewModel::addEvent
+                        )
                     }
                 },
 

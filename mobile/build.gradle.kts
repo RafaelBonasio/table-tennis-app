@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.koin.compiler)
 }
 
 android {
@@ -74,4 +75,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.haze)
     implementation(libs.haze.blur)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 }
