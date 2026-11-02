@@ -8,6 +8,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
@@ -30,16 +31,16 @@ fun App() {
     val gameViewModel: GameViewModel = viewModel()
 
     SharedTransitionLayout {
-        TableTennisAppTheme(settingsState.theme, settingsState.isDynamicColorEnabled, settingsState.blurRadius) {
+        TableTennisAppTheme(settingsState.theme, settingsState.isDynamicColorEnabled, settingsState.blurRadiusDp.dp) {
             NavDisplay(
                 backStack = backStack,
                 entryProvider = entryProvider {
                     entry<Root> {
                         RootScreen(this@SharedTransitionLayout,
-                            LocalNavAnimatedContentScope.current, { backStack.add(Settings) }, { player1, player2, rules -> backStack.add(Game); gameViewModel.newGame(player1, player2, rules) })
+                            LocalNavAnimatedContentScope.current, { backStack.add(SettingsRoute) }, { player1, player2, rules -> backStack.add(Game); gameViewModel.newGame(player1, player2, rules) })
                     }
 
-                    entry<Settings> {
+                    entry<SettingsRoute> {
                         SettingsPage(settingsViewModel, this@SharedTransitionLayout, LocalNavAnimatedContentScope.current, { backStack.removeLastOrNull() })
                     }
 

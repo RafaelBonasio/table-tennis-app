@@ -1,5 +1,7 @@
 package com.rafaelbonasio.tabletennisapp
 
+import android.app.Application
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
@@ -41,51 +43,95 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.Serializer
+import androidx.datastore.dataStore
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import com.rafaelbonasio.tabletennisapp.ui.FancyScaffold
 import com.rafaelbonasio.tabletennisapp.ui.FancyTopAppBar
+import com.rafaelbonasio.tabletennisapp.ui.LocalMinimumPadding
 import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
 import com.rafaelbonasio.tabletennisapp.ui.rememberDisplayRoundedCornerShape
-import com.rafaelbonasio.tabletennisapp.ui.LocalMinimumPadding
 import com.rafaelbonasio.tabletennisapp.ui.theme.TableTennisAppTheme
 import com.rafaelbonasio.tabletennisapp.ui.theme.Theme
 import dev.chrisbanes.haze.rememberHazeState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import java.io.InputStream
+import java.io.OutputStream
 import kotlin.math.roundToInt
 
 @Serializable
-data object Settings : NavKey
+data object SettingsRoute : NavKey
 
-class SettingsViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(SettingsUiState())
-    val uiState = _uiState.asStateFlow()
+class SettingsViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+    private val _dataStore = application.applicationContext.preferencesDataStore
+
+    val uiState = _dataStore.data.stateIn(scope = viewModelScope, started = SharingStarted.WhileSubscribed(), initialValue = Preferences())
 
     fun updateTheme(theme: Theme) {
-        _uiState.update { uiState -> uiState.copy(theme = theme) }
+        viewModelScope.launch {
+            _dataStore.updateData { uiState -> uiState.copy(theme = theme) }
+        }
     }
 
     fun updateDynamicColor(isDynamicColorEnabled: Boolean) {
-        _uiState.update { uiState -> uiState.copy(isDynamicColorEnabled = isDynamicColorEnabled) }
+        viewModelScope.launch {
+            _dataStore.updateData { uiState -> uiState.copy(isDynamicColorEnabled = isDynamicColorEnabled) }
+        }
     }
 
-    fun updateBlurRadius(blurRadius: Dp) {
-        _uiState.update { uiState -> uiState.copy(blurRadius = blurRadius) }
+    fun updateBlurRadius(blurRadiusDp: Float) {
+        viewModelScope.launch {
+            _dataStore.updateData { uiState -> uiState.copy(blurRadiusDp = blurRadiusDp) }
+        }
     }
 }
 
-data class SettingsUiState(
+@Serializable
+data class Preferences(
     val theme: Theme = Theme.SYSTEM,
     val isDynamicColorEnabled: Boolean = true,
-    val blurRadius: Dp = 16.dp
+    val blurRadiusDp: Float = 16f
 )
 
 data object SettingsSharedTransitionKey
+
+const val PREFERENCES_DATA_STORE_FILE_NAME = "Preferences"
+
+object PreferencesSerializer : Serializer<Preferences> {
+    override val defaultValue: Preferences = Preferences()
+
+    override suspend fun readFrom(input: InputStream): Preferences {
+        val text = input.readBytes().decodeToString()
+        return if (text.isEmpty()) {
+            defaultValue
+        } else {
+            Json.decodeFromString(Preferences.serializer(), text)
+        }
+    }
+
+    override suspend fun writeTo(
+        t: Preferences,
+        output: OutputStream
+    ) {
+        output.write(Json.encodeToString(Preferences.serializer(), t).toByteArray())
+    }
+}
+
+val Context.preferencesDataStore: DataStore<Preferences> by dataStore(
+    fileName = PREFERENCES_DATA_STORE_FILE_NAME,
+    serializer = PreferencesSerializer
+)
 
 @Composable
 fun SettingsSection(
@@ -179,7 +225,7 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
                                         ThemePreviewCard(
                                             theme,
                                             state.isDynamicColorEnabled,
-                                            state.blurRadius,
+                                            state.blurRadiusDp.dp,
                                             state.theme == theme,
                                             { viewModel.updateTheme(theme) })
                                     }
@@ -208,12 +254,12 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("Blur Radius")
                                 Slider(
-                                    value = state.blurRadius.value,
-                                    onValueChange = { value -> viewModel.updateBlurRadius(value.roundToInt().dp) },
+                                    value = state.blurRadiusDp,
+                                    onValueChange = { value -> viewModel.updateBlurRadius(value.roundToInt().toFloat()) },
                                     modifier = Modifier.weight(1f),
                                     valueRange = 0f..64f
                                 )
-                                Text("${state.blurRadius.value} dp")
+                                Text("${state.blurRadiusDp} dp")
                             }
                         }
                     }
