@@ -7,6 +7,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -61,6 +62,6 @@ fun App() {
 @Composable
 fun BackButton(onNavigateBack: () -> Unit) {
     IconButton(onClick = onNavigateBack) {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Voltar")
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
     }
 }

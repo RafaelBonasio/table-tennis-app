@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -191,7 +192,7 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
             topBar = {
                 FancyTopAppBar(
                     title = {
-                        Text("Configurações")
+                        Text(stringResource(R.string.settings_title))
                     },
                     hazeState = hazeState,
                     navigationIcon = {
@@ -217,7 +218,7 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
                 Column(
                     modifier = Modifier.gridItem(row = 2, column = 2)
                 ) {
-                    SettingsSection("Aparência", Icons.Default.Face) {
+                    SettingsSection(stringResource(R.string.settings_section_appearance), Icons.Default.Face) {
                         SettingsSectionItem {
                             Column {
                                 Row {
@@ -241,7 +242,7 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
 
                         SettingsSectionItem {
                             Row {
-                                Text("Dynamic Color")
+                                Text(stringResource(R.string.settings_dynamic_color))
                                 Switch(
                                     state.isDynamicColorEnabled,
                                     { viewModel.updateDynamicColor(!state.isDynamicColorEnabled) })
@@ -249,10 +250,10 @@ fun SettingsPage(viewModel: SettingsViewModel, sharedTransitionScope: SharedTran
                         }
                     }
 
-                    SettingsSection("Desempenho", Icons.Default.Build) {
+                    SettingsSection(stringResource(R.string.settings_section_performance), Icons.Default.Build) {
                         SettingsSectionItem {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Blur Radius")
+                                Text(stringResource(R.string.settings_blur_radius))
                                 Slider(
                                     value = state.blurRadiusDp,
                                     onValueChange = { value -> viewModel.updateBlurRadius(value.roundToInt().toFloat()) },

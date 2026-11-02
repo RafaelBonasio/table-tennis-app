@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavKey
 import com.rafaelbonasio.tabletennisapp.core.GameRules
 import com.rafaelbonasio.tabletennisapp.core.Player
@@ -45,7 +46,7 @@ fun RootScreen(sharedTransitionScope: SharedTransitionScope, animatedVisibilityS
             topBar = {
                 FancyTopAppBar(
                     title = {
-                        Text(Tab.entries[pagerState.currentPage].label)
+                        Text(stringResource(Tab.entries[pagerState.currentPage].labelStringId))
                     },
                     hazeState = hazeState,
                     actions = {
@@ -61,14 +62,14 @@ fun RootScreen(sharedTransitionScope: SharedTransitionScope, animatedVisibilityS
                                     )
                                 )
                         ) {
-                            Icon(Icons.Default.Settings, contentDescription = "Configurações")
+                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings_title))
                         }
                     }
                 )
             },
             bottomBar = {
                 FancyNavigationBar(
-                    Tab.entries.map { tab -> FancyNavigationBarItem(tab.label, tab.icon) },
+                    Tab.entries.map { tab -> FancyNavigationBarItem(stringResource(tab.labelStringId), tab.icon) },
                     pagerState,
                     hazeState
                 )
@@ -96,10 +97,10 @@ fun RootScreen(sharedTransitionScope: SharedTransitionScope, animatedVisibilityS
     }
 }
 
-enum class Tab(val label: String, val icon: ImageVector) {
-    Scoreboard("Placar", Icons.Default.DateRange),
-    Tab2("?", Icons.Default.Lock),
-    Tab3("?", Icons.Default.Lock)
+enum class Tab(val labelStringId: Int, val icon: ImageVector) {
+    Scoreboard(R.string.scoreboard_title, Icons.Default.DateRange),
+    Tab2(R.string.placeholder_page_title, Icons.Default.Lock),
+    Tab3(R.string.placeholder_page_title, Icons.Default.Lock)
 }
 
 @Composable
@@ -109,6 +110,6 @@ fun PlaceholderTab() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Eventualmente...")
+        Text(stringResource(R.string.placeholder_page_text))
     }
 }

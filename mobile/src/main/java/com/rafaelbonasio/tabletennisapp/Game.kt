@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -82,7 +83,7 @@ fun GamePage(sharedTransitionScope: SharedTransitionScope, animatedVisibilitySco
                             BackButton(onNavigateBack)
                         },
                         title = {
-                            Text("Jogo")
+                            Text(stringResource(R.string.match_title))
                         }
                     )
                 },
@@ -90,10 +91,10 @@ fun GamePage(sharedTransitionScope: SharedTransitionScope, animatedVisibilitySco
                     BottomAppBar(
                         actions = {
                             IconButton({ viewModel.addEvent(GameEvent.Undo) }) {
-                                Icon(Icons.Default.KeyboardArrowLeft, "Desfazer")
+                                Icon(Icons.Default.KeyboardArrowLeft, stringResource(R.string.action_undo))
                             }
                             IconButton({ viewModel.addEvent(GameEvent.Redo) }) {
-                                Icon(Icons.Default.Refresh, "Refazer")
+                                Icon(Icons.Default.Refresh, stringResource(R.string.action_redo))
                             }
                         },
                         floatingActionButton = {
@@ -101,7 +102,7 @@ fun GamePage(sharedTransitionScope: SharedTransitionScope, animatedVisibilitySco
                                 { onAddGame(viewModel.game) },
                                 shape = rememberDisplayRoundedCornerShape()
                             ) {
-                                Icon(Icons.Default.ExitToApp, "Finalizar")
+                                Icon(Icons.Default.ExitToApp, stringResource(R.string.action_finish))
                             }
                         },
                         containerColor = Color.Transparent
@@ -166,19 +167,19 @@ fun GameSettingsDialog(onDismiss: () -> Unit, onConfirm: (pointCount: Int, setCo
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Configurações do Jogo") },
+        title = { Text(stringResource(R.string.match_settings_title)) },
         text = {
             Column {
-                Text("Quantidade de Pontos")
+                Text(stringResource(R.string.match_settings_number_of_points))
                 TextField(pointsFieldState)
 
-                Text("Quantidade de Sets")
+                Text(stringResource(R.string.match_settings_number_of_games))
                 TextField(setsFieldState)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(R.string.action_cancel))
             }
         },
         confirmButton = {
@@ -186,7 +187,7 @@ fun GameSettingsDialog(onDismiss: () -> Unit, onConfirm: (pointCount: Int, setCo
                 onConfirm(pointsFieldState.text.toString().toInt(), setsFieldState.text.toString().toInt())
                 onDismiss()
             }) {
-                Text("Iniciar")
+                Text(stringResource(R.string.match_settings_start))
             }
         }
     )
