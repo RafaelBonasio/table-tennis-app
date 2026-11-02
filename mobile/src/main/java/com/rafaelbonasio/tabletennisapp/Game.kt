@@ -51,7 +51,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -194,7 +193,6 @@ fun GameSettingsDialog(onDismiss: () -> Unit, onConfirm: (pointCount: Int, setCo
 }
 
 class GameViewModel : ViewModel() {
-    @OptIn(ExperimentalUuidApi::class)
     public var game: Game = Game(Player(Uuid.random(), ""), Player(Uuid.random(), ""), GameRules(11, 3, 2))
 
     private val _uiState = MutableStateFlow(Scoreboard())

@@ -2,14 +2,11 @@ package com.rafaelbonasio.tabletennisapp.core
 
 import kotlin.math.abs
 import kotlin.time.Clock.System.now
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class Game(val player1: Player, val player2: Player, val rules: GameRules) {
 
-    @OptIn(ExperimentalTime::class)
     val start: Instant = now()
 
     //val end: Instant
@@ -95,4 +92,4 @@ enum class GameEvent {
     Redo
 }
 
-data class Player @OptIn(ExperimentalUuidApi::class) constructor(val id: Uuid, var name: String)
+data class Player constructor(val id: Uuid, var name: String)

@@ -27,6 +27,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,10 +36,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
-import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeProgressive
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.HazeColorEffect
+import dev.chrisbanes.haze.blur.hazeBlur
 import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 
@@ -51,14 +54,17 @@ fun FancyTopAppBar(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
+    val hazeBlurStyle = remember(backgroundColor) {
+        HazeBlurStyle {
+            colorEffects(listOf(HazeColorEffect.tint(backgroundColor)))
+            progressive(HazeProgressive.verticalGradient(startIntensity = 1f, endIntensity = 0f))
+        }
+    }
 
     TopAppBar(
         title = title,
         modifier = Modifier
-            .hazeEffect(hazeState) {
-                tints = listOf(HazeDefaults.tint(backgroundColor))
-                progressive = HazeProgressive.verticalGradient(startIntensity = 1f, endIntensity = 0f)
-            },
+            .hazeBlur(HazeInput.Sources(hazeState), hazeBlurStyle),
         navigationIcon = navigationIcon,
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -72,6 +78,11 @@ fun FancyNavigationBar(
     hazeState: HazeState
 ) {
     val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
+    val hazeBlurStyle = remember(backgroundColor) {
+        HazeBlurStyle {
+            colorEffects(hazeTint(backgroundColor))
+        }
+    }
 
     NavigationBar(
         modifier = Modifier.padding(horizontal = LocalMinimumPadding.current * 2),
@@ -82,9 +93,7 @@ fun FancyNavigationBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(rememberDisplayRoundedCornerShape())
-                .hazeEffect(hazeState) {
-                    tints = listOf(HazeDefaults.tint(backgroundColor))
-                }
+                .hazeBlur(HazeInput.Sources(hazeState), hazeBlurStyle)
         ) {
             val tabWidth = maxWidth / items.size
 
@@ -99,7 +108,7 @@ fun FancyNavigationBar(
                         translationX = tabWidth.toPx() * pageOffset
                     }
                     .clip(rememberDisplayRoundedCornerShape())
-                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(HazeDefaults.tintAlpha))
+                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(TINT_ALPHA))
                 )
 
                 Row {
@@ -153,4 +162,10 @@ fun FancyScaffold(hazeState: HazeState, modifier: Modifier = Modifier, topBar: @
             }
         }
     }
+}
+
+const val TINT_ALPHA = 0.7f // TODO: Hack. Haze v2 doesn't have a default tint alpha. Or rather, it's 1.
+
+fun hazeTint(color: Color): List<HazeColorEffect> {
+    return listOf(HazeColorEffect.tint(color.copy(TINT_ALPHA)))
 }

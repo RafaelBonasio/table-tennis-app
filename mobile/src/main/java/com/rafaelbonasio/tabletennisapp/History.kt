@@ -39,17 +39,17 @@ import com.rafaelbonasio.tabletennisapp.core.GameRules
 import com.rafaelbonasio.tabletennisapp.core.Player
 import com.rafaelbonasio.tabletennisapp.ui.FancyScaffold
 import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
+import com.rafaelbonasio.tabletennisapp.ui.hazeTint
 import com.rafaelbonasio.tabletennisapp.ui.rememberDisplayRoundedCornerShape
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.hazeBlur
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
 @Composable
 fun HistoryTab(sharedTransitionScope: SharedTransitionScope, animatedVisibilityScope: AnimatedVisibilityScope, onStartGame: (player1: Player, player2: Player, rules: GameRules) -> Unit, paddingValues: PaddingValues, viewModel: HistoryViewModel = viewModel()) {
     var showDialog by remember { mutableStateOf(false) }
@@ -65,6 +65,11 @@ fun HistoryTab(sharedTransitionScope: SharedTransitionScope, animatedVisibilityS
             hazeState = hazeState,
             floatingActionButton = {
                 val color = MaterialTheme.colorScheme.primaryContainer
+                val hazeBlurStyle = remember(color) {
+                    HazeBlurStyle {
+                        colorEffects(hazeTint(color))
+                    }
+                }
 
                 FloatingActionButton(
                     onClick = { showDialog = true },
@@ -77,9 +82,7 @@ fun HistoryTab(sharedTransitionScope: SharedTransitionScope, animatedVisibilityS
                         )
                         .padding(paddingValues - WindowInsets.navigationBars.asPaddingValues())
                         .clip(rememberDisplayRoundedCornerShape()) // Can't rely on `shape` because of the blur.
-                        .hazeEffect(hazeState) {
-                            tints = listOf(HazeDefaults.tint(color))
-                        },
+                        .hazeBlur(HazeInput.Sources(hazeState), hazeBlurStyle),
                     containerColor = Color.Transparent,
                     elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 0.dp)
                 ) {
