@@ -26,3 +26,4 @@ rootProject.name = "Table Tennis App"
 include(":mobile")
 include(":wear")
 include(":core")
+include(":data")

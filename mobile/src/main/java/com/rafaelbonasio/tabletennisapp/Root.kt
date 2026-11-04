@@ -14,17 +14,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
-import com.rafaelbonasio.tabletennisapp.core.Game
-import com.rafaelbonasio.tabletennisapp.core.GameRules
+import com.rafaelbonasio.tabletennisapp.core.Match
+import com.rafaelbonasio.tabletennisapp.core.MatchRules
 import com.rafaelbonasio.tabletennisapp.core.Player
 import com.rafaelbonasio.tabletennisapp.ui.FancyNavigationBar
 import com.rafaelbonasio.tabletennisapp.ui.FancyNavigationBarItem
@@ -34,13 +31,12 @@ import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
 import com.rafaelbonasio.tabletennisapp.ui.rememberDisplayRoundedCornerShape
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.serialization.Serializable
-import org.koin.androidx.compose.koinViewModel
 
 @Serializable
 data object RootNavKey : NavKey
 
 @Composable
-fun RootScreen(games: List<Game>, sharedTransitionScope: SharedTransitionScope, onNavigateSettings: () -> Unit, onStartGame: (Player, Player, GameRules) -> Unit) {
+fun RootScreen(matches: List<Match>, sharedTransitionScope: SharedTransitionScope, onNavigateSettings: () -> Unit, onStartMatch: (Player, Player, MatchRules) -> Unit) {
     with (sharedTransitionScope) {
         val hazeState = rememberHazeState()
 
@@ -86,9 +82,9 @@ fun RootScreen(games: List<Game>, sharedTransitionScope: SharedTransitionScope, 
                 when (Tab.entries[pageIndex]) {
                     Tab.Scoreboard -> {
                         HistoryTab(
-                            games,
+                            matches,
                             sharedTransitionScope,
-                            onStartGame,
+                            onStartMatch,
                             paddingValues
                         )
                     }

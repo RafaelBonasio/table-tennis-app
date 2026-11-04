@@ -47,6 +47,7 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(project(":core"))
+    implementation(project(":data"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.foundation.layout)
     implementation(libs.androidx.compose.material.icons.core)
@@ -77,4 +78,5 @@ dependencies {
     implementation(libs.haze.blur)
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
+    implementation(libs.androidx.room3.runtime)
 }

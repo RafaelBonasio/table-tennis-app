@@ -6,8 +6,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
@@ -17,7 +17,9 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
 import com.rafaelbonasio.tabletennisapp.ui.noneTransitionSpec
 import com.rafaelbonasio.tabletennisapp.ui.theme.TableTennisAppTheme
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @PreviewScreenSizes
 @Composable
@@ -27,23 +29,27 @@ fun App() {
     val settingsViewModel: SettingsViewModel = koinViewModel()
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()
 
-    val historyViewModel: HistoryViewModel = koinViewModel()
-
-    val gameViewModel: GameViewModel = koinViewModel()
-
     SharedTransitionLayout {
         TableTennisAppTheme(settingsState.theme, settingsState.isDynamicColorEnabled, settingsState.blurRadiusDp.dp) {
             NavDisplay(
                 backStack = backStack,
                 entryProvider = entryProvider {
                     entry<RootNavKey> {
-                        val games by historyViewModel.games.collectAsStateWithLifecycle()
+                        val historyViewModel: HistoryViewModel = koinViewModel()
+                        val matches by historyViewModel.matches.collectAsStateWithLifecycle()
+
+                        val coroutineScope = rememberCoroutineScope()
 
                         RootScreen(
-                            games,
+                            matches,
                             this@SharedTransitionLayout,
                             { backStack.add(SettingsNavKey) },
-                            { player1, player2, rules -> backStack.add(GameNavKey); gameViewModel.newGame(player1, player2, rules) }
+                            { player1, player2, rules ->
+                                coroutineScope.launch {
+                                    val matchId = historyViewModel.newMatch(player1, player2, rules)
+                                    backStack.add(MatchNavKey(matchId));
+                                }
+                            }
                         )
                     }
 
@@ -60,16 +66,20 @@ fun App() {
                         )
                     }
 
-                    entry<GameNavKey> {
-                        val uiState by gameViewModel.uiState.collectAsStateWithLifecycle()
+                    entry<MatchNavKey> { navKey ->
+                        val matchViewModel: MatchViewModel = koinViewModel(key = navKey.matchId.toString()) {
+                            parametersOf(navKey.matchId)
+                        }
+                        val uiState by matchViewModel.uiState.collectAsStateWithLifecycle()
 
-                        GameScreen(
+                        MatchScreen(
                             uiState,
-                            gameViewModel.game,
                             this@SharedTransitionLayout,
                             { backStack.removeLastOrNull() },
-                            historyViewModel::addGame,
-                            gameViewModel::addEvent
+                            {
+                                backStack.removeLastOrNull()
+                            },
+                            matchViewModel::addEvent
                         )
                     }
                 },

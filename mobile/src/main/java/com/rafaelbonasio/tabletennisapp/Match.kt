@@ -25,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,44 +32,50 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
-import com.rafaelbonasio.tabletennisapp.core.Game
-import com.rafaelbonasio.tabletennisapp.core.GameEvent
-import com.rafaelbonasio.tabletennisapp.core.GameRules
-import com.rafaelbonasio.tabletennisapp.core.Player
+import com.rafaelbonasio.tabletennisapp.core.MatchEvent
 import com.rafaelbonasio.tabletennisapp.core.Scoreboard
+import com.rafaelbonasio.tabletennisapp.data.MatchRepository
 import com.rafaelbonasio.tabletennisapp.ui.FancyScaffold
 import com.rafaelbonasio.tabletennisapp.ui.FancyTopAppBar
 import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
 import com.rafaelbonasio.tabletennisapp.ui.rememberDisplayRoundedCornerShape
 import dev.chrisbanes.haze.rememberHazeState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlin.uuid.Uuid
 
 @Serializable
-data object GameNavKey : NavKey
+data class MatchNavKey(val matchId: Uuid) : NavKey
 
-data object GameSharedTransitionKey
+data object MatchSharedTransitionKey
+
+data class MatchUiState(
+    val scoreboard: Scoreboard = Scoreboard(),
+    val player1Name: String = "",
+    val player2Name: String = ""
+)
 
 @Composable
-fun GameScreen(
-    state: Scoreboard,
-    game: Game,
+fun MatchScreen(
+    state: MatchUiState,
     sharedTransitionScope: SharedTransitionScope,
     onNavigateBack: () -> Unit,
-    onAddGame: (Game) -> Unit,
-    onAddEvent: (GameEvent) -> Unit
+    onFinishMatch: () -> Unit,
+    onAddEvent: (MatchEvent) -> Unit
 ) {
     val hazeState = rememberHazeState()
 
     with (sharedTransitionScope) {
         Box(modifier = Modifier.sharedBounds(
-            rememberSharedContentState(GameSharedTransitionKey),
+            rememberSharedContentState(MatchSharedTransitionKey),
             LocalNavAnimatedContentScope.current,
             boundsTransform = asymmetricBoundsTransform,
             clipInOverlayDuringTransition = OverlayClip(rememberDisplayRoundedCornerShape())
@@ -93,16 +98,16 @@ fun GameScreen(
                 bottomBar = {
                     BottomAppBar(
                         actions = {
-                            IconButton({ onAddEvent(GameEvent.Undo) }) {
+                            IconButton({ onAddEvent(MatchEvent.Undo) }) {
                                 Icon(Icons.Default.KeyboardArrowLeft, stringResource(R.string.action_undo))
                             }
-                            IconButton({ onAddEvent(GameEvent.Redo) }) {
+                            IconButton({ onAddEvent(MatchEvent.Redo) }) {
                                 Icon(Icons.Default.Refresh, stringResource(R.string.action_redo))
                             }
                         },
                         floatingActionButton = {
                             FloatingActionButton(
-                                { onAddGame(game) },
+                                { onFinishMatch() },
                                 shape = rememberDisplayRoundedCornerShape()
                             ) {
                                 Icon(Icons.Default.ExitToApp, stringResource(R.string.action_finish))
@@ -114,18 +119,18 @@ fun GameScreen(
             ) {
                 Row(Modifier.padding(it).clip(rememberDisplayRoundedCornerShape())) {
                     PlayerScoreCard(
-                        game.player1.name,
-                        state.player1Score,
-                        state.player1SetScore,
-                        !state.isPlayer2Serving,
-                        { onAddEvent(GameEvent.Player1Scored) })
+                        state.player1Name,
+                        state.scoreboard.player1PointScore,
+                        state.scoreboard.player1GameScore,
+                        !state.scoreboard.isPlayer2Serving,
+                        { onAddEvent(MatchEvent.Player1Scored) })
 
                     PlayerScoreCard(
-                        game.player2.name,
-                        state.player2Score,
-                        state.player2SetScore,
-                        state.isPlayer2Serving,
-                        { onAddEvent(GameEvent.Player2Scored) }
+                        state.player2Name,
+                        state.scoreboard.player2PointScore,
+                        state.scoreboard.player2GameScore,
+                        state.scoreboard.isPlayer2Serving,
+                        { onAddEvent(MatchEvent.Player2Scored) }
                     )
                 }
             }
@@ -164,9 +169,9 @@ private fun RowScope.PlayerScoreCard(
 }
 
 @Composable
-fun GameSettingsDialog(onDismiss: () -> Unit, onConfirm: (pointCount: Int, setCount: Int) -> Unit) {
-    val pointsFieldState = rememberTextFieldState("11")
-    val setsFieldState = rememberTextFieldState("3")
+fun MatchSettingsDialog(onDismiss: () -> Unit, onConfirm: (gameSize: Int, matchSize: Int) -> Unit) {
+    val gameSizeFieldState = rememberTextFieldState("11")
+    val matchSizeFieldState = rememberTextFieldState("3")
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -174,10 +179,10 @@ fun GameSettingsDialog(onDismiss: () -> Unit, onConfirm: (pointCount: Int, setCo
         text = {
             Column {
                 Text(stringResource(R.string.match_settings_number_of_points))
-                TextField(pointsFieldState)
+                TextField(gameSizeFieldState)
 
                 Text(stringResource(R.string.match_settings_number_of_games))
-                TextField(setsFieldState)
+                TextField(matchSizeFieldState)
             }
         },
         dismissButton = {
@@ -187,7 +192,7 @@ fun GameSettingsDialog(onDismiss: () -> Unit, onConfirm: (pointCount: Int, setCo
         },
         confirmButton = {
             TextButton(onClick = {
-                onConfirm(pointsFieldState.text.toString().toInt(), setsFieldState.text.toString().toInt())
+                onConfirm(gameSizeFieldState.text.toString().toInt(), matchSizeFieldState.text.toString().toInt())
                 onDismiss()
             }) {
                 Text(stringResource(R.string.match_settings_start))
@@ -196,21 +201,24 @@ fun GameSettingsDialog(onDismiss: () -> Unit, onConfirm: (pointCount: Int, setCo
     )
 }
 
-class GameViewModel : ViewModel() {
-    public var game: Game = Game(Player(Uuid.random(), ""), Player(Uuid.random(), ""), GameRules(11, 3, 2))
+class MatchViewModel(private val matchRepository: MatchRepository, matchId: Uuid) : ViewModel() {
+    val matchFlow = matchRepository.getMatch(matchId)
 
-    private val _uiState = MutableStateFlow(Scoreboard())
-    val uiState = _uiState.asStateFlow()
+    val uiState: StateFlow<MatchUiState> = matchFlow.map { match ->
+        MatchUiState(
+            match.calculateScoreboard(),
+            match.player1.name,
+            match.player2.name
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MatchUiState())
 
-    fun addEvent(event: GameEvent) {
-        game.events.add(event)
+    fun addEvent(event: MatchEvent) {
+        viewModelScope.launch {
+            val match = matchFlow.first()
 
-        _uiState.update { game.calculateScoreboard() }
-    }
+            match.events.add(event)
 
-    fun newGame(player1: Player, player2: Player, rules: GameRules) {
-        game = Game(player1, player2, rules)
-
-        _uiState.update { Scoreboard() } //
+            matchRepository.saveMatch(match)
+        }
     }
 }

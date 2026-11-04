@@ -21,7 +21,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,11 +31,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
-import com.rafaelbonasio.tabletennisapp.core.Game
-import com.rafaelbonasio.tabletennisapp.core.GameRules
+import com.rafaelbonasio.tabletennisapp.core.Match
+import com.rafaelbonasio.tabletennisapp.core.MatchRules
 import com.rafaelbonasio.tabletennisapp.core.Player
+import com.rafaelbonasio.tabletennisapp.data.MatchRepository
 import com.rafaelbonasio.tabletennisapp.ui.FancyScaffold
 import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
 import com.rafaelbonasio.tabletennisapp.ui.hazeTint
@@ -45,13 +45,12 @@ import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.blur.HazeBlurStyle
 import dev.chrisbanes.haze.blur.hazeBlur
 import dev.chrisbanes.haze.rememberHazeState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlin.uuid.Uuid
 
 @Composable
-fun HistoryTab(games: List<Game>, sharedTransitionScope: SharedTransitionScope, onStartGame: (player1: Player, player2: Player, rules: GameRules) -> Unit, paddingValues: PaddingValues) {
+fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScope, onStartMatch: (player1: Player, player2: Player, rules: MatchRules) -> Unit, paddingValues: PaddingValues) {
     var showDialog by remember { mutableStateOf(false) }
 
     val lazyListState = rememberLazyListState()
@@ -73,7 +72,7 @@ fun HistoryTab(games: List<Game>, sharedTransitionScope: SharedTransitionScope, 
                     onClick = { showDialog = true },
                     modifier = Modifier
                         .sharedBounds(
-                            rememberSharedContentState(GameSharedTransitionKey),
+                            rememberSharedContentState(MatchSharedTransitionKey),
                             LocalNavAnimatedContentScope.current,
                             boundsTransform = asymmetricBoundsTransform,
                             clipInOverlayDuringTransition = OverlayClip(rememberDisplayRoundedCornerShape())
@@ -92,39 +91,41 @@ fun HistoryTab(games: List<Game>, sharedTransitionScope: SharedTransitionScope, 
                 state = lazyListState,
                 contentPadding = paddingValues
             ) {
-                items(games) { game ->
-                    val scoreboard = game.calculateScoreboard()
+                items(matches) { match ->
+                    val scoreboard = match.calculateScoreboard()
 
                     OutlinedCard(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                     ) {
-                        Text("${game.player1.name} vs. ${game.player2.name}")
-                        Text("${scoreboard.player1Score} - ${scoreboard.player2Score}")
-                        Text("S: ${scoreboard.player1SetScore} - ${scoreboard.player2SetScore}")
+                        Text("${match.player1.name} vs. ${match.player2.name}")
+                        Text("${scoreboard.player1PointScore} - ${scoreboard.player2PointScore}")
+                        Text("S: ${scoreboard.player1GameScore} - ${scoreboard.player2GameScore}")
                     }
                 }
             }
 
             if (showDialog) {
-                GameSettingsDialog({ showDialog = false }, { pointCount, setCount ->
+                MatchSettingsDialog({ showDialog = false }, { pointCount, setCount ->
                     val player1 = Player(Uuid.random(), "Jogador Um")
                     val player2 = Player(Uuid.random(), "Jogador Dois")
 
-                    val rules = GameRules(pointCount, setCount, 2)
+                    val rules = MatchRules(pointCount, setCount, 2)
 
-                    onStartGame(player1, player2, rules)
+                    onStartMatch(player1, player2, rules)
                 })
             }
         }
     }
 }
 
-class HistoryViewModel : ViewModel() {
-    var _games = MutableStateFlow<List<Game>>(emptyList())
-    val games = _games.asStateFlow()
+class HistoryViewModel(private val matchRepository: MatchRepository) : ViewModel() {
+    val matches = matchRepository.matches
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    fun addGame(game: Game) {
-        _games.update { list -> list + game }
+    suspend fun newMatch(player1: Player, player2: Player, rules: MatchRules): Uuid {
+        val match = Match(Uuid.random(), player1, player2, rules)
+        matchRepository.saveMatch(match)
+        return match.id
     }
 }
