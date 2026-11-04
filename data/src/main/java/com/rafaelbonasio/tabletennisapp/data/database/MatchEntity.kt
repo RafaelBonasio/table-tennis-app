@@ -19,7 +19,8 @@ data class MatchEntity(
     val player1Id: Uuid,
     val player2Id: Uuid,
     val rules: MatchRules,
-    val events: List<MatchEvent>
+    val events: List<MatchEvent>,
+    val isPlayer2ServingFirst: Boolean
 )
 
 @Dao
@@ -46,12 +47,12 @@ data class MatchWithPlayers(
 )
 
 fun MatchWithPlayers.toMatch(): Match {
-    val domainMatch = Match(match.id, player1.toPlayer(), player2.toPlayer(), match.rules)
+    val domainMatch = Match(match.id, player1.toPlayer(), player2.toPlayer(), match.rules, match.isPlayer2ServingFirst)
     domainMatch.events.addAll(match.events)
 
     return domainMatch
 }
 
 fun Match.toEntity(): MatchEntity {
-    return MatchEntity(id, player1.id, player2.id, rules, events)
+    return MatchEntity(id, player1.id, player2.id, rules, events, isPlayer2ServingFirst)
 }

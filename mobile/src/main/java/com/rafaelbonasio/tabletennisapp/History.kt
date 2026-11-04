@@ -47,6 +47,7 @@ import dev.chrisbanes.haze.blur.hazeBlur
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlin.random.Random
 import kotlin.uuid.Uuid
 
 @Composable
@@ -124,7 +125,7 @@ class HistoryViewModel(private val matchRepository: MatchRepository) : ViewModel
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     suspend fun newMatch(player1: Player, player2: Player, rules: MatchRules): Uuid {
-        val match = Match(Uuid.random(), player1, player2, rules)
+        val match = Match(Uuid.random(), player1, player2, rules, Random.nextBoolean())
         matchRepository.saveMatch(match)
         return match.id
     }

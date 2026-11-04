@@ -6,7 +6,7 @@ import kotlin.time.Clock.System.now
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
-class Match(val id: Uuid, val player1: Player, val player2: Player, val rules: MatchRules) { // ITTF Statutes 2026 2.12: Match
+class Match(val id: Uuid, val player1: Player, val player2: Player, val rules: MatchRules, val isPlayer2ServingFirst: Boolean) { // ITTF Statutes 2026 2.12: Match
 
     val start: Instant = now()
 
@@ -16,6 +16,8 @@ class Match(val id: Uuid, val player1: Player, val player2: Player, val rules: M
 
     fun calculateScoreboard(): Scoreboard {
         val scoreboard = Scoreboard()
+
+        scoreboard.isPlayer2Serving = isPlayer2ServingFirst
 
         fun calculatePointsDifference(): Int {
             return abs(scoreboard.player2PointScore - scoreboard.player1PointScore)
