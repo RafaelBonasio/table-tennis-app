@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.rafaelbonasio.tabletennisapp.core.MatchEvent
 import com.rafaelbonasio.tabletennisapp.ui.noneTransitionSpec
 import com.rafaelbonasio.tabletennisapp.ui.theme.TableTennisAppTheme
 import kotlinx.coroutines.launch
@@ -49,6 +50,9 @@ fun App() {
                                     val matchId = historyViewModel.newMatch(player1, player2, rules)
                                     backStack.add(MatchNavKey(matchId));
                                 }
+                            },
+                            { match ->
+                                backStack.add(MatchNavKey(match.id))
                             }
                         )
                     }
@@ -77,6 +81,7 @@ fun App() {
                             this@SharedTransitionLayout,
                             { backStack.removeLastOrNull() },
                             {
+                                matchViewModel.addEvent(MatchEvent.Canceled)
                                 backStack.removeLastOrNull()
                             },
                             matchViewModel::addEvent

@@ -36,7 +36,7 @@ import kotlinx.serialization.Serializable
 data object RootNavKey : NavKey
 
 @Composable
-fun RootScreen(matches: List<Match>, sharedTransitionScope: SharedTransitionScope, onNavigateSettings: () -> Unit, onStartMatch: (Player, Player, MatchRules) -> Unit) {
+fun RootScreen(matches: List<Match>, sharedTransitionScope: SharedTransitionScope, onNavigateSettings: () -> Unit, onStartMatch: (Player, Player, MatchRules) -> Unit, onNavigateToMatch: (Match) -> Unit) {
     with (sharedTransitionScope) {
         val hazeState = rememberHazeState()
 
@@ -85,6 +85,7 @@ fun RootScreen(matches: List<Match>, sharedTransitionScope: SharedTransitionScop
                             matches,
                             sharedTransitionScope,
                             onStartMatch,
+                            onNavigateToMatch,
                             paddingValues
                         )
                     }

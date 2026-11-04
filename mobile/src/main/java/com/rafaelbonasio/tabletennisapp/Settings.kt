@@ -32,7 +32,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,7 +45,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
@@ -325,7 +323,8 @@ fun ThemePreviewCard(theme: Theme, dynamicColor: Boolean, blurRadius: Dp, isSele
                             emptyList(), // TODO: Figure out mock data for rich display.
                             this@SharedTransitionLayout,
                             {},
-                            { _, _, _ -> }
+                            { _, _, _ -> },
+                            {}
                         )
                     }
                 }

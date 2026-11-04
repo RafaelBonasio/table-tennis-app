@@ -20,6 +20,7 @@
     <string name="match_settings_number_of_points">Number of Points</string>
     <string name="match_settings_start">Start</string>
     <string name="match_title">Match</string>
+    <string name="match_in_progress">IN PROGRESS</string>
 
     <string name="placeholder_page_title" translatable="false">\?</string>
     <string name="placeholder_page_text">Eventually…</string>

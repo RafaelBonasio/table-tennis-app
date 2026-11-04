@@ -2,6 +2,7 @@ package com.rafaelbonasio.tabletennisapp.core
 
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.time.Clock.System.now
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
@@ -23,12 +24,22 @@ class Match(val id: Uuid, val player1: Player, val player2: Player, val rules: M
             return abs(scoreboard.player2PointScore - scoreboard.player1PointScore)
         }
 
+        fun checkForFinish() {
+            val gamesToWin = ceil(rules.matchSize / 2f).toInt()
+
+            if (scoreboard.player1GameScore == gamesToWin || scoreboard.player2GameScore == gamesToWin) {
+                scoreboard.isFinished = true
+            }
+        }
+
         fun checkForPlayer1Win() {
             if (scoreboard.player1PointScore >= rules.gameSize && calculatePointsDifference() >= 2) {
                 scoreboard.player1PointScore = 0
                 scoreboard.player2PointScore = 0
 
                 scoreboard.player1GameScore++
+
+                checkForFinish()
             }
         }
 
@@ -39,6 +50,8 @@ class Match(val id: Uuid, val player1: Player, val player2: Player, val rules: M
                 scoreboard.player2PointScore = 0
 
                 scoreboard.player2GameScore++
+
+                checkForFinish()
             }
         }
 
@@ -68,6 +81,10 @@ class Match(val id: Uuid, val player1: Player, val player2: Player, val rules: M
 
                 MatchEvent.Undo -> TODO()
                 MatchEvent.Redo -> TODO()
+
+                MatchEvent.Canceled -> {
+                    scoreboard.isFinished = true
+                }
             }
         }
 
@@ -82,7 +99,9 @@ data class Scoreboard (
     var player1GameScore: Int = 0,
     var player2GameScore: Int = 0,
 
-    var isPlayer2Serving: Boolean = false
+    var isPlayer2Serving: Boolean = false,
+
+    var isFinished: Boolean = false
 )
 
 @Serializable
@@ -94,5 +113,6 @@ enum class MatchEvent { // ITTF Statutes 2026 2.11: Game
     Player2Scored,
     Net,
     Undo,
-    Redo
+    Redo,
+    Canceled
 }

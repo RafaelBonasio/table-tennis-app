@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +41,7 @@ import com.rafaelbonasio.tabletennisapp.core.Scoreboard
 import com.rafaelbonasio.tabletennisapp.data.MatchRepository
 import com.rafaelbonasio.tabletennisapp.ui.FancyScaffold
 import com.rafaelbonasio.tabletennisapp.ui.FancyTopAppBar
+import com.rafaelbonasio.tabletennisapp.ui.LocalMinimumPadding
 import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
 import com.rafaelbonasio.tabletennisapp.ui.rememberDisplayRoundedCornerShape
 import dev.chrisbanes.haze.rememberHazeState
@@ -68,7 +70,7 @@ fun MatchScreen(
     state: MatchUiState,
     sharedTransitionScope: SharedTransitionScope,
     onNavigateBack: () -> Unit,
-    onFinishMatch: () -> Unit,
+    onCancelMatch: () -> Unit,
     onAddEvent: (MatchEvent) -> Unit
 ) {
     val hazeState = rememberHazeState()
@@ -107,7 +109,7 @@ fun MatchScreen(
                         },
                         floatingActionButton = {
                             FloatingActionButton(
-                                { onFinishMatch() },
+                                { onCancelMatch() },
                                 shape = rememberDisplayRoundedCornerShape()
                             ) {
                                 Icon(Icons.Default.ExitToApp, stringResource(R.string.action_finish))
@@ -136,6 +138,12 @@ fun MatchScreen(
             }
         }
 
+    }
+
+    LaunchedEffect(state.scoreboard.isFinished) {
+        if (state.scoreboard.isFinished) {
+            onNavigateBack()
+        }
     }
 }
 

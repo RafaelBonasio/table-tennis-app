@@ -1,7 +1,13 @@
 package com.rafaelbonasio.tabletennisapp
 
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -38,6 +45,7 @@ import com.rafaelbonasio.tabletennisapp.core.MatchRules
 import com.rafaelbonasio.tabletennisapp.core.Player
 import com.rafaelbonasio.tabletennisapp.data.MatchRepository
 import com.rafaelbonasio.tabletennisapp.ui.FancyScaffold
+import com.rafaelbonasio.tabletennisapp.ui.LocalMinimumPadding
 import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
 import com.rafaelbonasio.tabletennisapp.ui.hazeTint
 import com.rafaelbonasio.tabletennisapp.ui.rememberDisplayRoundedCornerShape
@@ -51,7 +59,7 @@ import kotlin.random.Random
 import kotlin.uuid.Uuid
 
 @Composable
-fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScope, onStartMatch: (player1: Player, player2: Player, rules: MatchRules) -> Unit, paddingValues: PaddingValues) {
+fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScope, onStartMatch: (player1: Player, player2: Player, rules: MatchRules) -> Unit, onNavigateToMatch: (Match) -> Unit, paddingValues: PaddingValues) {
     var showDialog by remember { mutableStateOf(false) }
 
     val lazyListState = rememberLazyListState()
@@ -90,18 +98,55 @@ fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScop
         ) { innerPaddingValues ->
             LazyColumn(
                 state = lazyListState,
-                contentPadding = paddingValues
+                contentPadding = paddingValues,
+                verticalArrangement = Arrangement.spacedBy(LocalMinimumPadding.current)
             ) {
-                items(matches) { match ->
+                val sortedMatches = matches.sortedBy { match ->
+                    match.calculateScoreboard().isFinished
+                }
+
+                items(sortedMatches) { match ->
                     val scoreboard = match.calculateScoreboard()
 
                     OutlinedCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(
+                                enabled = !scoreboard.isFinished,
+                                onClick = { onNavigateToMatch(match) }
+                            ),
+                        colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                        border = if (scoreboard.isFinished) CardDefaults.outlinedCardBorder() else BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("${match.player1.name} vs. ${match.player2.name}")
-                        Text("${scoreboard.player1PointScore} - ${scoreboard.player2PointScore}")
-                        Text("S: ${scoreboard.player1GameScore} - ${scoreboard.player2GameScore}")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(LocalMinimumPadding.current),
+                            horizontalArrangement = Arrangement.spacedBy(LocalMinimumPadding.current)
+                        ) {
+                            Column {
+                                Text("${match.player1.name} vs. ${match.player2.name}")
+                                Text("${scoreboard.player1PointScore} - ${scoreboard.player2PointScore}")
+                                Text("S: ${scoreboard.player1GameScore} - ${scoreboard.player2GameScore}")
+                            }
+
+                            Spacer(Modifier.weight(1f))
+
+                            if (!scoreboard.isFinished) {
+                                Card(
+                                    colors = CardDefaults.outlinedCardColors(
+                                        containerColor = MaterialTheme.colorScheme.primary
+                                    )
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.match_in_progress),
+                                        modifier = Modifier.padding(LocalMinimumPadding.current),
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

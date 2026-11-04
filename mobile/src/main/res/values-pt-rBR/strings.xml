@@ -21,6 +21,7 @@
     <string name="match_settings_number_of_games">Número de Sets</string>
     <string name="match_settings_start">Começar</string>
     <string name="match_title">Partida</string>
+    <string name="match_in_progress">EM ANDAMENTO</string>
 
     <string name="placeholder_page_text">Eventualmente…</string>
 </resources>
