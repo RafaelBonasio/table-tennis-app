@@ -320,11 +320,11 @@ fun ThemePreviewCard(theme: Theme, dynamicColor: Boolean, blurRadius: Dp, isSele
                 TableTennisAppTheme(theme, dynamicColor, blurRadius) {
                     SharedTransitionLayout {
                         RootScreen(
-                            emptyList(), // TODO: Figure out mock data for rich display.
                             this@SharedTransitionLayout,
                             {},
-                            { _, _, _ -> },
-                            {}
+                            listOf(
+                                getPlaceholderTab()
+                            ) // TODO: Figure out mock data for rich display.
                         )
                     }
                 }

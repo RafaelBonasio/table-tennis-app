@@ -3,6 +3,7 @@ package com.rafaelbonasio.tabletennisapp
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -36,24 +37,39 @@ fun App() {
                 backStack = backStack,
                 entryProvider = entryProvider {
                     entry<RootNavKey> {
-                        val historyViewModel: HistoryViewModel = koinViewModel()
-                        val matches by historyViewModel.matches.collectAsStateWithLifecycle()
-
                         val coroutineScope = rememberCoroutineScope()
 
                         RootScreen(
-                            matches,
                             this@SharedTransitionLayout,
                             { backStack.add(SettingsNavKey) },
-                            { player1, player2, rules ->
-                                coroutineScope.launch {
-                                    val matchId = historyViewModel.newMatch(player1, player2, rules)
-                                    backStack.add(MatchNavKey(matchId));
-                                }
-                            },
-                            { match ->
-                                backStack.add(MatchNavKey(match.id))
-                            }
+                            listOf(
+                                Tab(
+                                    stringResource(R.string.scoreboard_title),
+                                    Icons.Default.DateRange,
+                                    { paddingValues ->
+                                        val historyViewModel: HistoryViewModel = koinViewModel()
+                                        val matches by historyViewModel.matches.collectAsStateWithLifecycle()
+
+                                        HistoryTab(
+                                            matches,
+                                            this@SharedTransitionLayout,
+                                            { player1, player2, rules ->
+                                                coroutineScope.launch {
+                                                    val matchId = historyViewModel.newMatch(player1, player2, rules)
+                                                    backStack.add(MatchNavKey(matchId))
+                                                }
+                                            },
+                                            { match ->
+                                                backStack.add(MatchNavKey(match.id))
+                                            },
+                                            paddingValues
+                                        )
+                                    }
+                                ),
+
+                                getPlaceholderTab(),
+                                getPlaceholderTab()
+                            )
                         )
                     }
 

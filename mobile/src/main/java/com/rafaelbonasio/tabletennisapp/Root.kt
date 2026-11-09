@@ -3,11 +3,11 @@ package com.rafaelbonasio.tabletennisapp
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -20,9 +20,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
-import com.rafaelbonasio.tabletennisapp.core.Match
-import com.rafaelbonasio.tabletennisapp.core.MatchRules
-import com.rafaelbonasio.tabletennisapp.core.Player
 import com.rafaelbonasio.tabletennisapp.ui.FancyNavigationBar
 import com.rafaelbonasio.tabletennisapp.ui.FancyNavigationBarItem
 import com.rafaelbonasio.tabletennisapp.ui.FancyScaffold
@@ -36,18 +33,22 @@ import kotlinx.serialization.Serializable
 data object RootNavKey : NavKey
 
 @Composable
-fun RootScreen(matches: List<Match>, sharedTransitionScope: SharedTransitionScope, onNavigateSettings: () -> Unit, onStartMatch: (Player, Player, MatchRules) -> Unit, onNavigateToMatch: (Match) -> Unit) {
+fun RootScreen(
+    sharedTransitionScope: SharedTransitionScope,
+    onNavigateSettings: () -> Unit,
+    tabs: List<Tab>
+) {
     with (sharedTransitionScope) {
         val hazeState = rememberHazeState()
 
-        val pagerState = rememberPagerState(pageCount = Tab.entries::size)
+        val pagerState = rememberPagerState(pageCount = tabs::size)
 
         FancyScaffold(
             hazeState = hazeState,
             topBar = {
                 FancyTopAppBar(
                     title = {
-                        Text(stringResource(Tab.entries[pagerState.currentPage].labelStringId))
+                        Text(tabs[pagerState.currentPage].label)
                     },
                     hazeState = hazeState,
                     actions = {
@@ -70,39 +71,27 @@ fun RootScreen(matches: List<Match>, sharedTransitionScope: SharedTransitionScop
             },
             bottomBar = {
                 FancyNavigationBar(
-                    Tab.entries.map { tab -> FancyNavigationBarItem(stringResource(tab.labelStringId), tab.icon) },
+                    tabs.map { tab -> FancyNavigationBarItem(tab.label, tab.icon) },
                     pagerState,
                     hazeState
                 )
             }
         ) { paddingValues ->
             HorizontalPager(
-                state = pagerState
+                state = pagerState,
+                beyondViewportPageCount = tabs.size // Prevents stuttering when switching tabs.
             ) { pageIndex ->
-                when (Tab.entries[pageIndex]) {
-                    Tab.Scoreboard -> {
-                        HistoryTab(
-                            matches,
-                            sharedTransitionScope,
-                            onStartMatch,
-                            onNavigateToMatch,
-                            paddingValues
-                        )
-                    }
-
-                    Tab.Tab2, Tab.Tab3 -> {
-                        PlaceholderTab()
-                    }
-                }
+                tabs[pageIndex].content(paddingValues)
             }
         }
     }
 }
 
-enum class Tab(val labelStringId: Int, val icon: ImageVector) {
-    Scoreboard(R.string.scoreboard_title, Icons.Default.DateRange),
-    Tab2(R.string.placeholder_page_title, Icons.Default.Lock),
-    Tab3(R.string.placeholder_page_title, Icons.Default.Lock)
+data class Tab(val label: String, val icon: ImageVector, val content: @Composable (PaddingValues) -> Unit)
+
+@Composable
+fun getPlaceholderTab(): Tab {
+    return Tab(stringResource(R.string.placeholder_page_title), Icons.Default.Lock, { PlaceholderTab() })
 }
 
 @Composable
