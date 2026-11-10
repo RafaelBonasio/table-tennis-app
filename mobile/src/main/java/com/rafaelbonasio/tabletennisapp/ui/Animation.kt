@@ -18,6 +18,6 @@ val asymmetricBoundsTransform = BoundsTransform { initialBounds, targetBounds ->
             stiffness = Spring.StiffnessMediumLow
         )
     } else {
-        spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+        spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
     }
 }

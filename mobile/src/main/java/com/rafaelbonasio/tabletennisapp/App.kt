@@ -53,10 +53,10 @@ fun App() {
                                         HistoryTab(
                                             matches,
                                             this@SharedTransitionLayout,
-                                            { player1, player2, rules ->
+                                            { id, player1, player2, rules ->
                                                 coroutineScope.launch {
-                                                    val matchId = historyViewModel.newMatch(player1, player2, rules)
-                                                    backStack.add(MatchNavKey(matchId))
+                                                    historyViewModel.newMatch(id, player1, player2, rules)
+                                                    backStack.add(MatchNavKey(id))
                                                 }
                                             },
                                             { match ->

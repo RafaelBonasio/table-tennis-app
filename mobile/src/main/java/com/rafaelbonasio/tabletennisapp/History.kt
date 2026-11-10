@@ -28,6 +28,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,12 +60,27 @@ import kotlin.random.Random
 import kotlin.uuid.Uuid
 
 @Composable
-fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScope, onStartMatch: (player1: Player, player2: Player, rules: MatchRules) -> Unit, onNavigateToMatch: (Match) -> Unit, paddingValues: PaddingValues) {
+fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScope, onStartMatch: (id: Uuid, player1: Player, player2: Player, rules: MatchRules) -> Unit, onNavigateToMatch: (Match) -> Unit, paddingValues: PaddingValues) {
     var showDialog by remember { mutableStateOf(false) }
+
+    var pendingMatchId by remember { mutableStateOf(Uuid.NIL) }
 
     val lazyListState = rememberLazyListState()
 
     val hazeState = rememberHazeState()
+
+    val sortedMatches = matches.sortedBy { match ->
+        match.calculateScoreboard().isFinished
+    }
+
+    LaunchedEffect(pendingMatchId, sortedMatches) {
+        if (pendingMatchId != Uuid.NIL) {
+            val matchIndex = sortedMatches.indexOfFirst { it.id == pendingMatchId }
+            if (matchIndex != -1) {
+                lazyListState.animateScrollToItem(matchIndex)
+            }
+        }
+    }
 
     with (sharedTransitionScope) {
         FancyScaffold(
@@ -78,10 +94,13 @@ fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScop
                 }
 
                 FloatingActionButton(
-                    onClick = { showDialog = true },
+                    onClick = {
+                        pendingMatchId = Uuid.random()
+                        showDialog = true
+                    },
                     modifier = Modifier
                         .sharedBounds(
-                            rememberSharedContentState(MatchSharedTransitionKey),
+                            rememberSharedContentState(MatchSharedTransitionKey(pendingMatchId)),
                             LocalNavAnimatedContentScope.current,
                             boundsTransform = asymmetricBoundsTransform,
                             clipInOverlayDuringTransition = OverlayClip(rememberDisplayRoundedCornerShape())
@@ -101,16 +120,17 @@ fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScop
                 contentPadding = paddingValues,
                 verticalArrangement = Arrangement.spacedBy(LocalMinimumPadding.current)
             ) {
-                val sortedMatches = matches.sortedBy { match ->
-                    match.calculateScoreboard().isFinished
-                }
-
                 items(sortedMatches) { match ->
                     val scoreboard = match.calculateScoreboard()
 
                     OutlinedCard(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .sharedBounds( // TODO: Stop it from overlaying the Scaffold's slots, but keep it overlaying the other cards.
+                                rememberSharedContentState(MatchSharedTransitionKey(match.id)),
+                                LocalNavAnimatedContentScope.current,
+                                boundsTransform = asymmetricBoundsTransform
+                            )
                             .clickable(
                                 enabled = !scoreboard.isFinished,
                                 onClick = { onNavigateToMatch(match) }
@@ -125,9 +145,72 @@ fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScop
                             horizontalArrangement = Arrangement.spacedBy(LocalMinimumPadding.current)
                         ) {
                             Column {
-                                Text("${match.player1.name} vs. ${match.player2.name}")
-                                Text("${scoreboard.player1PointScore} - ${scoreboard.player2PointScore}")
-                                Text("S: ${scoreboard.player1GameScore} - ${scoreboard.player2GameScore}")
+                                Row {
+                                    Text(
+                                        match.player1.name,
+                                        modifier = Modifier.sharedBounds(
+                                            rememberSharedContentState(MatchSharedElementKey(match.id, MatchSharedElementKeyElementType.Player1Name)),
+                                            LocalNavAnimatedContentScope.current,
+                                            boundsTransform = asymmetricBoundsTransform,
+                                            renderInOverlayDuringTransition = false
+                                        )
+                                    )
+                                    Text(" vs. ")
+                                    Text(
+                                        match.player2.name,
+                                        modifier = Modifier.sharedBounds(
+                                            rememberSharedContentState(MatchSharedElementKey(match.id, MatchSharedElementKeyElementType.Player2Name)),
+                                            LocalNavAnimatedContentScope.current,
+                                            boundsTransform = asymmetricBoundsTransform,
+                                            renderInOverlayDuringTransition = false
+                                        )
+                                    )
+                                }
+
+                                Row {
+                                    Text(
+                                        scoreboard.player1PointScore.toString(),
+                                        modifier = Modifier.sharedBounds(
+                                            rememberSharedContentState(MatchSharedElementKey(match.id, MatchSharedElementKeyElementType.Player1PointScore)),
+                                            LocalNavAnimatedContentScope.current,
+                                            boundsTransform = asymmetricBoundsTransform,
+                                            renderInOverlayDuringTransition = false
+                                        )
+                                    )
+                                    Text(" - ")
+                                    Text(
+                                        scoreboard.player2PointScore.toString(),
+                                        modifier = Modifier.sharedBounds(
+                                            rememberSharedContentState(MatchSharedElementKey(match.id, MatchSharedElementKeyElementType.Player2PointScore)),
+                                            LocalNavAnimatedContentScope.current,
+                                            boundsTransform = asymmetricBoundsTransform,
+                                            renderInOverlayDuringTransition = false
+                                        )
+                                    )
+                                }
+
+                                Row {
+                                    Text("S: ")
+                                    Text(
+                                        scoreboard.player1GameScore.toString(),
+                                        modifier = Modifier.sharedBounds(
+                                            rememberSharedContentState(MatchSharedElementKey(match.id, MatchSharedElementKeyElementType.Player1GameScore)),
+                                            LocalNavAnimatedContentScope.current,
+                                            boundsTransform = asymmetricBoundsTransform,
+                                            renderInOverlayDuringTransition = false
+                                        )
+                                    )
+                                    Text(" - ")
+                                    Text(
+                                        scoreboard.player2GameScore.toString(),
+                                        modifier = Modifier.sharedBounds(
+                                            rememberSharedContentState(MatchSharedElementKey(match.id, MatchSharedElementKeyElementType.Player2GameScore)),
+                                            LocalNavAnimatedContentScope.current,
+                                            boundsTransform = asymmetricBoundsTransform,
+                                            renderInOverlayDuringTransition = false
+                                        )
+                                    )
+                                }
                             }
 
                             Spacer(Modifier.weight(1f))
@@ -158,7 +241,7 @@ fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScop
 
                     val rules = MatchRules(pointCount, setCount, 2)
 
-                    onStartMatch(player1, player2, rules)
+                    onStartMatch(pendingMatchId, player1, player2, rules)
                 })
             }
         }
@@ -169,9 +252,8 @@ class HistoryViewModel(private val matchRepository: MatchRepository) : ViewModel
     val matches = matchRepository.matches
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    suspend fun newMatch(player1: Player, player2: Player, rules: MatchRules): Uuid {
-        val match = Match(Uuid.random(), player1, player2, rules, Random.nextBoolean())
+    suspend fun newMatch(id: Uuid, player1: Player, player2: Player, rules: MatchRules) {
+        val match = Match(id, player1, player2, rules, Random.nextBoolean())
         matchRepository.saveMatch(match)
-        return match.id
     }
 }

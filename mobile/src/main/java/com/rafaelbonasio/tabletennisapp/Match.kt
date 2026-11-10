@@ -41,7 +41,6 @@ import com.rafaelbonasio.tabletennisapp.core.Scoreboard
 import com.rafaelbonasio.tabletennisapp.data.MatchRepository
 import com.rafaelbonasio.tabletennisapp.ui.FancyScaffold
 import com.rafaelbonasio.tabletennisapp.ui.FancyTopAppBar
-import com.rafaelbonasio.tabletennisapp.ui.LocalMinimumPadding
 import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
 import com.rafaelbonasio.tabletennisapp.ui.rememberDisplayRoundedCornerShape
 import dev.chrisbanes.haze.rememberHazeState
@@ -57,9 +56,10 @@ import kotlin.uuid.Uuid
 @Serializable
 data class MatchNavKey(val matchId: Uuid) : NavKey
 
-data object MatchSharedTransitionKey
+data class MatchSharedTransitionKey(val matchId: Uuid)
 
 data class MatchUiState(
+    val matchId: Uuid = Uuid.NIL,
     val scoreboard: Scoreboard = Scoreboard(),
     val player1Name: String = "",
     val player2Name: String = ""
@@ -77,7 +77,7 @@ fun MatchScreen(
 
     with (sharedTransitionScope) {
         Box(modifier = Modifier.sharedBounds(
-            rememberSharedContentState(MatchSharedTransitionKey),
+            rememberSharedContentState(MatchSharedTransitionKey(state.matchId)),
             LocalNavAnimatedContentScope.current,
             boundsTransform = asymmetricBoundsTransform,
             clipInOverlayDuringTransition = OverlayClip(rememberDisplayRoundedCornerShape())
@@ -125,14 +125,23 @@ fun MatchScreen(
                         state.scoreboard.player1PointScore,
                         state.scoreboard.player1GameScore,
                         !state.scoreboard.isPlayer2Serving,
-                        { onAddEvent(MatchEvent.Player1Scored) })
+                        { onAddEvent(MatchEvent.Player1Scored) },
+                        sharedTransitionScope,
+                        MatchSharedElementKey(state.matchId, MatchSharedElementKeyElementType.Player1Name),
+                        MatchSharedElementKey(state.matchId, MatchSharedElementKeyElementType.Player1PointScore),
+                        MatchSharedElementKey(state.matchId, MatchSharedElementKeyElementType.Player1GameScore)
+                    )
 
                     PlayerScoreCard(
                         state.player2Name,
                         state.scoreboard.player2PointScore,
                         state.scoreboard.player2GameScore,
                         state.scoreboard.isPlayer2Serving,
-                        { onAddEvent(MatchEvent.Player2Scored) }
+                        { onAddEvent(MatchEvent.Player2Scored) },
+                        sharedTransitionScope,
+                        MatchSharedElementKey(state.matchId, MatchSharedElementKeyElementType.Player2Name),
+                        MatchSharedElementKey(state.matchId, MatchSharedElementKeyElementType.Player2PointScore),
+                        MatchSharedElementKey(state.matchId, MatchSharedElementKeyElementType.Player2GameScore)
                     )
                 }
             }
@@ -153,7 +162,11 @@ private fun RowScope.PlayerScoreCard(
     points: Int,
     setsScore: Int,
     isServing: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    textSharedKey: MatchSharedElementKey,
+    pointScoreSharedKey: MatchSharedElementKey,
+    gameScoreSharedKey: MatchSharedElementKey
 ) {
     Surface(
         modifier = Modifier
@@ -168,10 +181,40 @@ private fun RowScope.PlayerScoreCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(name, style = MaterialTheme.typography.titleLarge)
+            with (sharedTransitionScope) {
+                Text(
+                    name,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.sharedBounds(
+                        rememberSharedContentState(textSharedKey),
+                        LocalNavAnimatedContentScope.current,
+                        boundsTransform = asymmetricBoundsTransform,
+                        renderInOverlayDuringTransition = false
+                    )
+                )
 
-            Text(points.toString(), style = MaterialTheme.typography.displayLarge, fontWeight = FontWeight.ExtraBold)
-            Text(setsScore.toString(), style = MaterialTheme.typography.displaySmall)
+                Text(
+                    points.toString(),
+                    modifier = Modifier.sharedBounds(
+                        rememberSharedContentState(pointScoreSharedKey),
+                        LocalNavAnimatedContentScope.current,
+                        boundsTransform = asymmetricBoundsTransform,
+                        renderInOverlayDuringTransition = false
+                    ),
+                    style = MaterialTheme.typography.displayLarge,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    setsScore.toString(),
+                    modifier = Modifier.sharedBounds(
+                        rememberSharedContentState(gameScoreSharedKey),
+                        LocalNavAnimatedContentScope.current,
+                        boundsTransform = asymmetricBoundsTransform,
+                        renderInOverlayDuringTransition = false
+                    ),
+                    style = MaterialTheme.typography.displaySmall
+                )
+            }
         }
     }
 }
@@ -214,11 +257,12 @@ class MatchViewModel(private val matchRepository: MatchRepository, matchId: Uuid
 
     val uiState: StateFlow<MatchUiState> = matchFlow.map { match ->
         MatchUiState(
+            match.id,
             match.calculateScoreboard(),
             match.player1.name,
             match.player2.name
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MatchUiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MatchUiState(matchId))
 
     fun addEvent(event: MatchEvent) {
         viewModelScope.launch {
@@ -229,4 +273,15 @@ class MatchViewModel(private val matchRepository: MatchRepository, matchId: Uuid
             matchRepository.saveMatch(match)
         }
     }
+}
+
+data class MatchSharedElementKey(val matchId: Uuid, val elementType: MatchSharedElementKeyElementType)
+
+enum class MatchSharedElementKeyElementType {
+    Player1Name,
+    Player2Name,
+    Player1PointScore,
+    Player2PointScore,
+    Player1GameScore,
+    Player2GameScore
 }
