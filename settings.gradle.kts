@@ -23,7 +23,7 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Table Tennis App"
-include(":mobile")
-include(":wear")
+include(":androidApp")
+include(":wearApp")
 include(":core")
 include(":data")
