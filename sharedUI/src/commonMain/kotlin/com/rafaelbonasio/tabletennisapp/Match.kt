@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,6 +50,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.stringResource
 import kotlin.uuid.Uuid
 
 @Serializable
@@ -93,7 +93,7 @@ fun MatchScreen(
                             BackButton(onNavigateBack)
                         },
                         title = {
-                            Text(stringResource(R.string.match_title))
+                            Text(stringResource(Res.string.match_title))
                         }
                     )
                 },
@@ -101,10 +101,10 @@ fun MatchScreen(
                     BottomAppBar(
                         actions = {
                             IconButton({ onAddEvent(MatchEvent.Undo) }) {
-                                Icon(Icons.Default.KeyboardArrowLeft, stringResource(R.string.action_undo))
+                                Icon(Icons.Default.KeyboardArrowLeft, stringResource(Res.string.action_undo))
                             }
                             IconButton({ onAddEvent(MatchEvent.Redo) }) {
-                                Icon(Icons.Default.Refresh, stringResource(R.string.action_redo))
+                                Icon(Icons.Default.Refresh, stringResource(Res.string.action_redo))
                             }
                         },
                         floatingActionButton = {
@@ -112,7 +112,7 @@ fun MatchScreen(
                                 { onCancelMatch() },
                                 shape = rememberDisplayRoundedCornerShape()
                             ) {
-                                Icon(Icons.Default.ExitToApp, stringResource(R.string.action_finish))
+                                Icon(Icons.Default.ExitToApp, stringResource(Res.string.action_finish))
                             }
                         },
                         containerColor = Color.Transparent
@@ -226,19 +226,19 @@ fun MatchSettingsDialog(onDismiss: () -> Unit, onConfirm: (gameSize: Int, matchS
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.match_settings_title)) },
+        title = { Text(stringResource(Res.string.match_settings_title)) },
         text = {
             Column {
-                Text(stringResource(R.string.match_settings_number_of_points))
+                Text(stringResource(Res.string.match_settings_number_of_points))
                 TextField(gameSizeFieldState)
 
-                Text(stringResource(R.string.match_settings_number_of_games))
+                Text(stringResource(Res.string.match_settings_number_of_games))
                 TextField(matchSizeFieldState)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
+                Text(stringResource(Res.string.action_cancel))
             }
         },
         confirmButton = {
@@ -246,7 +246,7 @@ fun MatchSettingsDialog(onDismiss: () -> Unit, onConfirm: (gameSize: Int, matchS
                 onConfirm(gameSizeFieldState.text.toString().toInt(), matchSizeFieldState.text.toString().toInt())
                 onDismiss()
             }) {
-                Text(stringResource(R.string.match_settings_start))
+                Text(stringResource(Res.string.match_settings_start))
             }
         }
     )

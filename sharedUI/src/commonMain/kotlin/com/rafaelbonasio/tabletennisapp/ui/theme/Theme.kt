@@ -1,33 +1,24 @@
 package com.rafaelbonasio.tabletennisapp.ui.theme
 
-import android.graphics.Color
-import android.os.Build
-import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import dev.chrisbanes.haze.blur.HazeBlurStyle
 import dev.chrisbanes.haze.blur.LocalHazeBlurStyle
 
-private val DarkColorScheme = darkColorScheme(
+val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
     tertiary = Pink80
 )
 
-private val LightColorScheme = lightColorScheme(
+val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
     tertiary = Pink40
@@ -44,6 +35,15 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
+expect fun rememberColorScheme(isThemeLight: Boolean, dynamicColor: Boolean): ColorScheme
+
+/**
+ * Updates the color scheme of the system bars.
+ */
+@Composable
+expect fun SystemBarStyleEffect(isThemeLight: Boolean)
+
+@Composable
 fun TableTennisAppTheme(
     theme: Theme,
     dynamicColor: Boolean,
@@ -52,29 +52,9 @@ fun TableTennisAppTheme(
 ) {
     val isThemeLight = theme.isLight()
 
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (!isThemeLight) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val colorScheme = rememberColorScheme(isThemeLight, dynamicColor)
 
-        !isThemeLight -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
-    // Update system bars:
-    val view = LocalView.current
-    LaunchedEffect(isThemeLight) {
-        val activity = view.context as ComponentActivity
-
-        val style = if (isThemeLight) {
-            SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
-        } else {
-            SystemBarStyle.dark(Color.TRANSPARENT)
-        }
-
-        activity.enableEdgeToEdge(style, style)
-    }
+    SystemBarStyleEffect(isThemeLight)
 
     CompositionLocalProvider(
         LocalHazeBlurStyle provides remember(blurRadius) {

@@ -5,11 +5,7 @@ plugins {
 
 android {
     namespace = "com.rafaelbonasio.tabletennisapp"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.rafaelbonasio.tabletennisapp"

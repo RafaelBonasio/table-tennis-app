@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import com.rafaelbonasio.tabletennisapp.ui.FancyNavigationBar
@@ -28,6 +27,7 @@ import com.rafaelbonasio.tabletennisapp.ui.asymmetricBoundsTransform
 import com.rafaelbonasio.tabletennisapp.ui.rememberDisplayRoundedCornerShape
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.stringResource
 
 @Serializable
 data object RootNavKey : NavKey
@@ -64,7 +64,7 @@ fun RootScreen(
                                     )
                                 )
                         ) {
-                            Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings_title))
+                            Icon(Icons.Default.Settings, contentDescription = stringResource(Res.string.settings_title))
                         }
                     }
                 )
@@ -91,7 +91,7 @@ data class Tab(val label: String, val icon: ImageVector, val content: @Composabl
 
 @Composable
 fun getPlaceholderTab(): Tab {
-    return Tab(stringResource(R.string.placeholder_page_title), Icons.Default.Lock, { PlaceholderTab() })
+    return Tab(stringResource(Res.string.placeholder_page_title), Icons.Default.Lock, { PlaceholderTab() })
 }
 
 @Composable
@@ -101,6 +101,6 @@ fun PlaceholderTab() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(stringResource(R.string.placeholder_page_text))
+        Text(stringResource(Res.string.placeholder_page_text))
     }
 }

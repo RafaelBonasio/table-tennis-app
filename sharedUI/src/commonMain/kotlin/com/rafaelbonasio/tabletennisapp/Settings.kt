@@ -1,6 +1,5 @@
 package com.rafaelbonasio.tabletennisapp
 
-import android.content.Context
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.BorderStroke
@@ -37,13 +36,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
+import androidx.datastore.core.Storage
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation3.runtime.NavKey
@@ -61,9 +60,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.jetbrains.compose.resources.stringResource
 import java.io.InputStream
 import java.io.OutputStream
 import kotlin.math.roundToInt
+
+const val PREFERENCES_DATA_STORE_FILE_NAME = "Preferences"
 
 @Serializable
 data object SettingsNavKey : NavKey
@@ -101,8 +103,6 @@ data class Preferences(
 
 data object SettingsSharedTransitionKey
 
-const val PREFERENCES_DATA_STORE_FILE_NAME = "Preferences"
-
 object PreferencesSerializer : Serializer<Preferences> {
     override val defaultValue: Preferences = Preferences()
 
@@ -123,10 +123,9 @@ object PreferencesSerializer : Serializer<Preferences> {
     }
 }
 
-val Context.preferencesDataStore: DataStore<Preferences> by dataStore(
-    fileName = PREFERENCES_DATA_STORE_FILE_NAME,
-    serializer = PreferencesSerializer
-)
+fun createPreferencesDataStore(storage: Storage<Preferences>): DataStore<Preferences> {
+    return DataStoreFactory.create(storage)
+}
 
 @Composable
 fun SettingsSection(
@@ -191,7 +190,7 @@ fun SettingsScreen(
             topBar = {
                 FancyTopAppBar(
                     title = {
-                        Text(stringResource(R.string.settings_title))
+                        Text(stringResource(Res.string.settings_title))
                     },
                     hazeState = hazeState,
                     navigationIcon = {
@@ -217,7 +216,7 @@ fun SettingsScreen(
                 Column(
                     modifier = Modifier.gridItem(row = 2, column = 2)
                 ) {
-                    SettingsSection(stringResource(R.string.settings_section_appearance), Icons.Default.Face) {
+                    SettingsSection(stringResource(Res.string.settings_section_appearance), Icons.Default.Face) {
                         SettingsSectionItem {
                             Column {
                                 Row {
@@ -241,7 +240,7 @@ fun SettingsScreen(
 
                         SettingsSectionItem {
                             Row {
-                                Text(stringResource(R.string.settings_dynamic_color))
+                                Text(stringResource(Res.string.settings_dynamic_color))
                                 Switch(
                                     state.isDynamicColorEnabled,
                                     { onUpdateDynamicColor(!state.isDynamicColorEnabled) })
@@ -249,10 +248,10 @@ fun SettingsScreen(
                         }
                     }
 
-                    SettingsSection(stringResource(R.string.settings_section_performance), Icons.Default.Build) {
+                    SettingsSection(stringResource(Res.string.settings_section_performance), Icons.Default.Build) {
                         SettingsSectionItem {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(stringResource(R.string.settings_blur_radius))
+                                Text(stringResource(Res.string.settings_blur_radius))
                                 Slider(
                                     value = state.blurRadiusDp,
                                     onValueChange = { value -> onUpdateBlurRadius(value.roundToInt().toFloat()) },

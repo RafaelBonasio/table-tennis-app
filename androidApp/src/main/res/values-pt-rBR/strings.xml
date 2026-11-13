@@ -1,27 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Table Tennis App</string>
-
-    <string name="action_back">Voltar</string>
-    <string name="action_cancel">Cancelar</string>
-    <string name="action_undo">Desfazer</string>
-    <string name="action_redo">Refazer</string>
-    <string name="action_finish">Finalizar</string>
-
-    <string name="settings_title">Configurações</string>
-    <string name="settings_section_appearance">Aparência</string>
-    <string name="settings_dynamic_color">Cor Dinâmica</string>
-    <string name="settings_section_performance">Desempenho</string>
-    <string name="settings_blur_radius">Raio do Borrado</string>
-
-    <string name="scoreboard_title">Placar</string>
-    <string name="scoreboard_new_match">Nova Partida</string>
-    <string name="match_settings_title">Configurações da Partida</string>
-    <string name="match_settings_number_of_points">Número de Pontos</string>
-    <string name="match_settings_number_of_games">Número de Sets</string>
-    <string name="match_settings_start">Começar</string>
-    <string name="match_title">Partida</string>
-    <string name="match_in_progress">EM ANDAMENTO</string>
-
-    <string name="placeholder_page_text">Eventualmente…</string>
 </resources>

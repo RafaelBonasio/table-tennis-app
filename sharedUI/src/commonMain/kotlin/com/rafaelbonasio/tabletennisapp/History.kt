@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -56,6 +55,7 @@ import dev.chrisbanes.haze.blur.hazeBlur
 import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import org.jetbrains.compose.resources.stringResource
 import kotlin.random.Random
 import kotlin.uuid.Uuid
 
@@ -111,7 +111,7 @@ fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScop
                     containerColor = Color.Transparent,
                     elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 0.dp)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.scoreboard_new_match))
+                    Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.scoreboard_new_match))
                 }
             }
         ) { innerPaddingValues ->
@@ -222,7 +222,7 @@ fun HistoryTab(matches: List<Match>, sharedTransitionScope: SharedTransitionScop
                                     )
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.match_in_progress),
+                                        text = stringResource(Res.string.match_in_progress),
                                         modifier = Modifier.padding(LocalMinimumPadding.current),
                                         color = MaterialTheme.colorScheme.onPrimary,
                                         style = MaterialTheme.typography.labelSmall

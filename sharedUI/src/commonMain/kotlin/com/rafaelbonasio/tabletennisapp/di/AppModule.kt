@@ -1,29 +1,22 @@
 package com.rafaelbonasio.tabletennisapp.di
 
-import androidx.datastore.core.DataStore
 import com.rafaelbonasio.tabletennisapp.HistoryViewModel
 import com.rafaelbonasio.tabletennisapp.MatchViewModel
-import com.rafaelbonasio.tabletennisapp.Preferences
 import com.rafaelbonasio.tabletennisapp.SettingsViewModel
 import com.rafaelbonasio.tabletennisapp.data.MatchRepository
 import com.rafaelbonasio.tabletennisapp.data.database.MatchDao
 import com.rafaelbonasio.tabletennisapp.data.database.PlayerDao
 import com.rafaelbonasio.tabletennisapp.data.database.TableTennisAppDatabase
-import com.rafaelbonasio.tabletennisapp.preferencesDataStore
-import org.koin.android.ext.koin.androidContext
+import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import org.koin.plugin.module.dsl.viewModel
 import kotlin.uuid.Uuid
 
-val appModule = module {
-    single<DataStore<Preferences>> {
-        androidContext().preferencesDataStore
-    }
+expect val platformModule: Module
 
-    single<TableTennisAppDatabase> {
-        DatabaseProvider.getDatabase(androidContext())
-    }
+val appModule = module {
+    includes(platformModule)
 
     single<MatchDao> {
         get<TableTennisAppDatabase>().matchDao()

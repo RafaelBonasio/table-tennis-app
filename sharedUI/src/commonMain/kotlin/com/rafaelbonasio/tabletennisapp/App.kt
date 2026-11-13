@@ -9,7 +9,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.entryProvider
@@ -19,7 +18,8 @@ import com.rafaelbonasio.tabletennisapp.core.MatchEvent
 import com.rafaelbonasio.tabletennisapp.ui.noneTransitionSpec
 import com.rafaelbonasio.tabletennisapp.ui.theme.TableTennisAppTheme
 import kotlinx.coroutines.launch
-import org.koin.androidx.compose.koinViewModel
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
@@ -42,7 +42,7 @@ fun App() {
                             { backStack.add(SettingsNavKey) },
                             listOf(
                                 Tab(
-                                    stringResource(R.string.scoreboard_title),
+                                    stringResource(Res.string.scoreboard_title),
                                     Icons.Default.DateRange,
                                     { paddingValues ->
                                         val historyViewModel: HistoryViewModel = koinViewModel()
@@ -115,6 +115,6 @@ fun App() {
 @Composable
 fun BackButton(onNavigateBack: () -> Unit) {
     IconButton(onClick = onNavigateBack) {
-        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.action_back))
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.action_back))
     }
 }
