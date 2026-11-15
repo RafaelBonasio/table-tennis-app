@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
@@ -9,6 +11,11 @@ kotlin {
     android {
         namespace = "com.rafaelbonasio.tabletennisapp.data"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
+    }
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
     }
 
     sourceSets {
@@ -23,4 +30,5 @@ kotlin {
 
 dependencies {
     add("kspAndroid", libs.androidx.room3.compiler)
+    add("kspWasmJs", libs.androidx.room3.compiler)
 }

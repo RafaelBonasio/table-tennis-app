@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
-import androidx.datastore.core.Serializer
 import androidx.datastore.core.Storage
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -59,10 +58,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
-import java.io.InputStream
-import java.io.OutputStream
 import kotlin.math.roundToInt
 
 const val PREFERENCES_DATA_STORE_FILE_NAME = "Preferences"
@@ -102,26 +98,6 @@ data class Preferences(
 )
 
 data object SettingsSharedTransitionKey
-
-object PreferencesSerializer : Serializer<Preferences> {
-    override val defaultValue: Preferences = Preferences()
-
-    override suspend fun readFrom(input: InputStream): Preferences {
-        val text = input.readBytes().decodeToString()
-        return if (text.isEmpty()) {
-            defaultValue
-        } else {
-            Json.decodeFromString(Preferences.serializer(), text)
-        }
-    }
-
-    override suspend fun writeTo(
-        t: Preferences,
-        output: OutputStream
-    ) {
-        output.write(Json.encodeToString(Preferences.serializer(), t).toByteArray())
-    }
-}
 
 fun createPreferencesDataStore(storage: Storage<Preferences>): DataStore<Preferences> {
     return DataStoreFactory.create(storage)

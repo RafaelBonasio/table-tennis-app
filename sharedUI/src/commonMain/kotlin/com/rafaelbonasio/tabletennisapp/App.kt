@@ -11,20 +11,35 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.rafaelbonasio.tabletennisapp.core.MatchEvent
 import com.rafaelbonasio.tabletennisapp.ui.noneTransitionSpec
 import com.rafaelbonasio.tabletennisapp.ui.theme.TableTennisAppTheme
 import kotlinx.coroutines.launch
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
+val navigationConfiguration = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(RootNavKey::class)
+            subclass(SettingsNavKey::class)
+            subclass(MatchNavKey::class)
+        }
+    }
+}
+
 @Composable
 fun App() {
-    val backStack = rememberNavBackStack(RootNavKey)
+    val backStack = rememberNavBackStack(navigationConfiguration, RootNavKey)
 
     val settingsViewModel: SettingsViewModel = koinViewModel()
     val settingsState by settingsViewModel.uiState.collectAsStateWithLifecycle()

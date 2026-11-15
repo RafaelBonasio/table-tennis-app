@@ -49,7 +49,7 @@ dependencies {
     implementation(libs.androidx.tiles.tooling.preview)
     implementation(libs.androidx.watchface.complications.data.source.ktx)
     implementation(libs.androidx.wear.tooling.preview)
-    implementation(libs.compose.material3)
+    implementation(libs.androidx.wear.compose.material3)
     implementation(libs.compose.ui.tooling)
     implementation(libs.guava)
     implementation(libs.play.services.wearable)
